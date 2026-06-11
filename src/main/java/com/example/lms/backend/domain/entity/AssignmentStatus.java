@@ -1,4 +1,6 @@
 package com.example.lms.backend.domain.entity;
 
-public class AssignmentStatus {
+public enum AssignmentStatus {
+    PENDING,
+    COMPLETED
 }
