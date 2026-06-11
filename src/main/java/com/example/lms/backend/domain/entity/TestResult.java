@@ -18,9 +18,9 @@ public class TestResult {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY) // Кто проходил
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "student_id")
-    private User user;
+    private User student;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "test_id")
