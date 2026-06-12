@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LMS Dashboard</title>
+</head>
+<body>
+
+<h1>LMS Dashboard</h1>
+
+<button onclick="logout()">Выйти</button>
+
+<div id="content"></div>
+
+<div id="tests"></div>
+
+<div id="assignments"></div>
+
+<script>
+
+const role = localStorage.getItem("role");
+
+const content = document.getElementById("content");
+
+if(role === "ADMIN"){
+    content.innerHTML = `
+        <h2>Администратор</h2>
+        <button>Пользователи</button>
+    `;
+}
+
+if(role === "MANAGER"){
+    content.innerHTML = `
+        <h2>Менеджер</h2>
+        <button>Тесты</button>
+        <button>Задания</button>
+        <button>Статистика</button>
+    `;
+}
+
+if(role === "STUDENT"){
+
+    content.innerHTML = `
+        <h2>Студент</h2>
+    `;
+
+    loadStudentData();
+}
+
+async function loadStudentData() {
+
+    const token =
+        localStorage.getItem("token");
+
+    const testsResponse =
+        await fetch(
+            "http://localhost:8080/api/tests",
+            {
+                headers: {
+                    "Authorization":
+                        "Bearer " + token
+                }
+            }
+        );
+
+    const tests =
+        await testsResponse.json();
+
+    document.getElementById("tests").innerHTML =
+        "<h3>Тесты</h3>" +
+        tests.map(test =>
+            `<button onclick="openTest(${test.id})">
+                ${test.title}
+            </button><br><br>`
+        ).join("");
+
+    const assignmentsResponse =
+        await fetch(
+            "http://localhost:8080/api/assignments",
+            {
+                headers: {
+                    "Authorization":
+                        "Bearer " + token
+                }
+            }
+        );
+
+    const assignments =
+        await assignmentsResponse.json();
+
+    document.getElementById("assignments").innerHTML =
+        "<h3>Задания</h3>" +
+        assignments.map(assignment =>
+            `<p>${assignment.title}</p>`
+        ).join("");
+}
+
+async function openTest(testId) {
+
+    const token =
+        localStorage.getItem("token");
+
+    const response =
+        await fetch(
+            `http://localhost:8080/api/tests/${testId}`,
+            {
+                headers: {
+                    "Authorization":
+                        "Bearer " + token
+                }
+            }
+        );
+
+    const test =
+        await response.json();
+
+    let html =
+        `<h2>${test.title}</h2>`;
+
+    test.questions.forEach(question => {
+
+        html += `
+            <h3>${question.questionText}</h3>
+        `;
+
+        question.answers.forEach(answer => {
+
+            html += `
+                <p>
+                    ${answer.label}. ${answer.answerText}
+                </p>
+            `;
+        });
+    });
+
+    document.getElementById("tests")
+        .innerHTML = html;
+}
+
+function logout() {
+
+    localStorage.clear();
+
+    window.location.href =
+        "login.html";
+}
+
+</script>
+
+</body>
+</html>
