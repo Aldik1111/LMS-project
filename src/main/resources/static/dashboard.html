@@ -125,15 +125,104 @@ async function openTest(testId) {
         question.answers.forEach(answer => {
 
             html += `
-                <p>
+                <label>
+                    <input
+                        type="radio"
+                        name="question_${question.id}"
+                        value="${answer.id}">
                     ${answer.label}. ${answer.answerText}
-                </p>
+                </label>
+                <br>
             `;
         });
+
+        html += `<br>`;
     });
+
+    html += `
+        <button onclick="submitTest(${testId})">
+            Сдать тест
+        </button>
+    `;
 
     document.getElementById("tests")
         .innerHTML = html;
+}
+
+async function submitTest(testId) {
+
+    const token =
+        localStorage.getItem("token");
+
+    const response =
+        await fetch(
+            `http://localhost:8080/api/tests/${testId}`,
+            {
+                headers: {
+                    "Authorization":
+                        "Bearer " + token
+                }
+            }
+        );
+
+    const test =
+        await response.json();
+
+    const answers = [];
+
+    test.questions.forEach(question => {
+
+        const selected =
+            document.querySelector(
+                `input[name="question_${question.id}"]:checked`
+            );
+
+        if(selected){
+
+            answers.push({
+                questionId: question.id,
+                selectedAnswerId:
+                    Number(selected.value)
+            });
+        }
+    });
+
+    const submitResponse =
+        await fetch(
+            `http://localhost:8080/api/tests/${testId}/submit`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type":
+                        "application/json",
+                    "Authorization":
+                        "Bearer " + token
+                },
+                body: JSON.stringify({
+                    answers: answers
+                })
+            }
+        );
+
+    const result =
+        await submitResponse.json();
+
+    document.getElementById("tests")
+        .innerHTML = `
+            <h2>Результат теста</h2>
+
+            <p>
+                Балл:
+                ${result.score}
+                /
+                ${result.totalPoints}
+            </p>
+
+            <p>
+                Неправильных ответов:
+                ${result.incorrectCount}
+            </p>
+        `;
 }
 
 function logout() {
