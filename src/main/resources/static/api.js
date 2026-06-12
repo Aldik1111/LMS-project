@@ -43,21 +43,12 @@ async function login() {
             data.role
         );
 
-        if (data.role === "ADMIN")
-            window.location.href = "admin.html";
-
-        if (data.role === "MANAGER")
-            window.location.href = "manager.html";
-
-        if (data.role === "STUDENT")
-            window.location.href = "student.html";
+        window.location.href = "dashboard.html";
 
     } catch (error) {
 
         console.error(error);
 
-        alert(
-            "Не удалось подключиться к серверу"
-        );
+        alert("Не удалось подключиться к серверу");
     }
 }
