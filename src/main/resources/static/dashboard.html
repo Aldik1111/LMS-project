@@ -68,7 +68,9 @@ async function loadStudentData() {
     document.getElementById("tests").innerHTML =
         "<h3>Тесты</h3>" +
         tests.map(test =>
-            `<p>${test.title}</p>`
+            `<button onclick="openTest(${test.id})">
+                ${test.title}
+            </button><br><br>`
         ).join("");
 
     const assignmentsResponse =
@@ -90,6 +92,48 @@ async function loadStudentData() {
         assignments.map(assignment =>
             `<p>${assignment.title}</p>`
         ).join("");
+}
+
+async function openTest(testId) {
+
+    const token =
+        localStorage.getItem("token");
+
+    const response =
+        await fetch(
+            `http://localhost:8080/api/tests/${testId}`,
+            {
+                headers: {
+                    "Authorization":
+                        "Bearer " + token
+                }
+            }
+        );
+
+    const test =
+        await response.json();
+
+    let html =
+        `<h2>${test.title}</h2>`;
+
+    test.questions.forEach(question => {
+
+        html += `
+            <h3>${question.questionText}</h3>
+        `;
+
+        question.answers.forEach(answer => {
+
+            html += `
+                <p>
+                    ${answer.label}. ${answer.answerText}
+                </p>
+            `;
+        });
+    });
+
+    document.getElementById("tests")
+        .innerHTML = html;
 }
 
 function logout() {
