@@ -1,6 +1,5 @@
 package com.example.lms.backend.infrastructure.security;
 
-import com.example.lms.backend.domain.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -10,7 +9,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -18,7 +16,7 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
-public class JwtFilter {
+public class JwtFilter extends OncePerRequestFilter {
     // OncePerRequestFilter - фильтр сработает тока 1 раз
 
     private final JwtUtil jwtUtil;
@@ -35,7 +33,7 @@ public class JwtFilter {
         String authHeader = request.getHeader("Authorization");
 
         // если заголовка нет или не подходит - пропуск без авторизаций
-        if (authHeader == null && !authHeader.startsWith("Bearer ")) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }

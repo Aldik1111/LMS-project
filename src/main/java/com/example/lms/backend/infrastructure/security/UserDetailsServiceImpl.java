@@ -3,7 +3,6 @@ package com.example.lms.backend.infrastructure.security;
 import com.example.lms.backend.domain.entity.User;
 import com.example.lms.backend.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -15,12 +14,11 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor    // Lombok: конструктор для всех final полей
                             // это лучший способ внедрения зависимостей
-public class UserDetailsServiceImpl {
+public class UserDetailsServiceImpl implements UserDetailsService {
     private final UserRepository userRepository;
 
     // Spring Security вызывает этот метод когда нужно загрузить юзера
     // "username" здесь — это наш email
-    @Override
     public UserDetails loadUserByUsername(String email)
         throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email)
