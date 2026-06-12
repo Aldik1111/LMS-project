@@ -8,40 +8,56 @@ async function login() {
     const password =
         document.getElementById("password").value;
 
-    const response = await fetch(
-        BASE_URL + "/auth/login",
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                email,
-                password
-            })
+    try {
+
+        const response = await fetch(
+            BASE_URL + "/auth/login",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    email,
+                    password
+                })
+            }
+        );
+
+        if (!response.ok) {
+            alert("Неверный email или пароль");
+            return;
         }
-    );
 
-    const data = await response.json();
+        const data = await response.json();
 
-    console.log(data);
+        console.log(data);
 
-    localStorage.setItem(
-        "token",
-        data.token
-    );
+        localStorage.setItem(
+            "token",
+            data.token
+        );
 
-    localStorage.setItem(
-        "role",
-        data.role
-    );
+        localStorage.setItem(
+            "role",
+            data.role
+        );
 
-    if (data.role === "ADMIN")
-        window.location.href = "admin.html";
+        if (data.role === "ADMIN")
+            window.location.href = "admin.html";
 
-    if (data.role === "MANAGER")
-        window.location.href = "manager.html";
+        if (data.role === "MANAGER")
+            window.location.href = "manager.html";
 
-    if (data.role === "STUDENT")
-        window.location.href = "student.html";
+        if (data.role === "STUDENT")
+            window.location.href = "student.html";
+
+    } catch (error) {
+
+        console.error(error);
+
+        alert(
+            "Не удалось подключиться к серверу"
+        );
+    }
 }
