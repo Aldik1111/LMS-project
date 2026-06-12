@@ -18,7 +18,7 @@ public class Answer {
     private String answerText; // answer text
 
     @Column(nullable = false)
-    private Integer label; // a/b/c/d
+    private String label; // a/b/c/d
 
     @Column(nullable = false)
     private boolean correct; // right answer?
