@@ -17,13 +17,7 @@ public class CorsConfig {
 
         // Разрешаем запросы с фронта
         // Когда фронт задеплоен — добавить его URL сюда
-        config.setAllowedOrigins(List.of(
-                "http://localhost:3000",  // React dev server
-                "http://localhost:5173",  // Vite dev server
-                "http://localhost:4200",  // Angular dev server
-                "http://127.0.0.1:5500"  // Live Server (VS Code)
-        ));
-
+        config.setAllowedOriginPatterns(List.of("*"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")); // Рвзрешенные HTTP методы
 
         config.setAllowCredentials(true); // Разрешаем отправку куки и заголовков авторизации

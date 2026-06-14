@@ -47,7 +47,7 @@ public class SecurityConfig {
                 )
 
 /*                .authorizeHttpRequests(auth -> auth // настройка правил доступа к эндпойнтам
-                        .requestMatchers("/api/auth/**").permitAll() // логин открыт для всех - без токена
+//                        .requestMatchers("/api/auth/**").permitAll() // логин открыт для всех - без токена
                         .anyRequest().authenticated() // все остальное с авторизацией
                 )
 
