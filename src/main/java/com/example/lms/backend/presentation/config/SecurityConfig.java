@@ -30,10 +30,28 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable) // off csrf
 
-                .authorizeHttpRequests(auth -> auth // настройка правил доступа к эндпойнтам
+                .authorizeHttpRequests(auth -> auth
+                        // Открываем статические страницы фронта
+                        .requestMatchers(
+                                "/",
+                                "/index.html",
+                                "/login.html",
+                                "/dashboard.html",
+                                "/api.js",
+                                "/favicon.ico"
+                        ).permitAll()
+                        // Логин открыт для всех
+                        .requestMatchers("/api/auth/**").permitAll()
+                        // Всё остальное (API) требует токен
+                        .anyRequest().authenticated()
+                )
+
+/*                .authorizeHttpRequests(auth -> auth // настройка правил доступа к эндпойнтам
                         .requestMatchers("/api/auth/**").permitAll() // логин открыт для всех - без токена
                         .anyRequest().authenticated() // все остальное с авторизацией
                 )
+
+ */
 
                 // Говорим Spring Security не создавать сессии
                 // Мы используем JWT — каждый запрос самодостаточен

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>LMS Dashboard</title>
 </head>
 <body>
@@ -53,7 +54,7 @@ async function loadStudentData() {
 
     const testsResponse =
         await fetch(
-            "http://localhost:8080/api/tests",
+            "/api/tests",
             {
                 headers: {
                     "Authorization":
@@ -75,7 +76,7 @@ async function loadStudentData() {
 
     const assignmentsResponse =
         await fetch(
-            "http://localhost:8080/api/assignments",
+            "/api/assignments",
             {
                 headers: {
                     "Authorization":
@@ -101,7 +102,7 @@ async function openTest(testId) {
 
     const response =
         await fetch(
-            `http://localhost:8080/api/tests/${testId}`,
+            `/api/tests/${testId}`,
             {
                 headers: {
                     "Authorization":
@@ -156,7 +157,7 @@ async function submitTest(testId) {
 
     const response =
         await fetch(
-            `http://localhost:8080/api/tests/${testId}`,
+            `/api/tests/${testId}`,
             {
                 headers: {
                     "Authorization":
@@ -189,7 +190,7 @@ async function submitTest(testId) {
 
     const submitResponse =
         await fetch(
-            `http://localhost:8080/api/tests/${testId}/submit`,
+            `/api/tests/${testId}/submit`,
             {
                 method: "POST",
                 headers: {
