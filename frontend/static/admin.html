@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel</title>
+</head>
+<body>
+
+<h1>Админ панель</h1>
+
+<h2>Создать пользователя</h2>
+
+<input id="email" placeholder="Email">
+<input id="password" placeholder="Пароль">
+
+<select id="role">
+    <option>ADMIN</option>
+    <option>MANAGER</option>
+    <option>STUDENT</option>
+</select>
+
+<button onclick="createUser()">
+    Создать пользователя
+</button>
+
+<hr>
+
+<h2>Пользователи</h2>
+
+<div id="users"></div>
+
+<script>
+
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    // Если нет токена или роль не ADMIN — выгоняем на логин
+    if (!token || role !== "ADMIN") {
+        window.location.href = "login.html";
+    } else {
+        loadUsers();
+    }
+
+
+    async function loadUsers() {
+
+        const response = await fetch(
+            "/api/users",
+            {
+                headers:{
+                    "Authorization":"Bearer " + token
+                }
+            }
+        );
+
+        const users = await response.json();
+
+        document.getElementById("users").innerHTML =
+            users.map(user => `
+            <p>
+                ${user.fullName}
+                (${user.email})
+                - ${user.role}
+            </p>
+        `).join("");
+    }
+    async function createUser() {
+
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+        const role = document.getElementById("role").value;
+
+        const response = await fetch("/api/users", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token
+            },
+            body: JSON.stringify({
+                email,
+                password,
+                role,
+                fullName: email,
+                active: true          // ← добавили это
+            })
+        });
+
+        if (!response.ok) {
+            const text = await response.text();
+            alert("Ошибка: " + text);
+            return;
+        }
+
+        loadUsers();
+    }
+
+</script>
+
+</body>
+</html>

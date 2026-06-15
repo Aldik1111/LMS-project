@@ -40,7 +40,7 @@ public class UserService {
         User user = User.builder()
                 .email(dto.getEmail())
                 .password(passwordEncoder.encode(dto.getPassword())) // Hash password
-                .fullName(dto.getFullname())
+                .fullName(dto.getFullName())
                 .role(dto.getRole())
                 .active(dto.getActive() != null ? dto.getActive() : true)
                 .build();
@@ -52,7 +52,7 @@ public class UserService {
     public UserDto updateUser(Long id, UserDto dto) {
         User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
 
-        user.setFullName(dto.getFullname());
+        user.setFullName(dto.getFullName());
         user.setRole(dto.getRole());
         user.setActive(dto.getActive() != null ? dto.getActive() : true);
 
