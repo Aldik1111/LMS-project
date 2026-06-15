@@ -35,7 +35,7 @@ public class SecurityConfig {
                             // Preflight-запросы CORS — разрешены всегда
                             .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                            .requestMatchers("/", "/*.html", "/*.js", "/favicon.ico", "/error").permitAll()
+                            .requestMatchers("/", "/*.html", "/*.js", "/*.css", "/favicon.ico", "/error").permitAll()
                             .requestMatchers("/api/auth/**").permitAll()
                             .anyRequest().authenticated()
                     )

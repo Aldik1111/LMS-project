@@ -75,10 +75,15 @@ public class TestService {
             }
         }
 
-        return getTestById(savedTest.getId(), false); // return full test
-
+        return new TestDto(
+                savedTest.getId(),
+                savedTest.getTitle(),
+                savedTest.getDescription(),
+                manager.getFullName(),
+                savedTest.getCreatedAt(),
+                null
+        );
     }
-
 
     @Transactional
     public void deleteTest(Long testId) {

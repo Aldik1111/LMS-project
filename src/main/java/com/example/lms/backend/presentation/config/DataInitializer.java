@@ -20,18 +20,19 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
 
-        userRepository.deleteAll();
+        if (!userRepository.existsByEmail("admin@lms.com")) {
+            User admin = User.builder()
+                    .email("admin@lms.com")
+                    .password(passwordEncoder.encode("admin"))
+                    .fullName("Admin")
+                    .role(Role.ADMIN)
+                    .active(true)
+                    .build();
 
-        User admin = User.builder()
-                .email("admin@lms.com")
-                .password(passwordEncoder.encode("admin"))
-                .fullName("Admin")
-                .role(Role.ADMIN)
-                .active(true)
-                .build();
+            userRepository.save(admin);
 
-        userRepository.save(admin);
-
-        log.info("ADMIN CREATED");
+            log.info("ADMIN CREATED");
+        }
+        else log.info("ADMIN ALREADY EXISTS");
     }
 }

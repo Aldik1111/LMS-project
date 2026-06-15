@@ -18,7 +18,8 @@ public class CorsConfig {
         // Разрешаем запросы с фронта
         // Когда фронт задеплоен — добавить его URL сюда
         config.setAllowedOriginPatterns(List.of("*"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")); // Рвзрешенные HTTP методы
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 
         config.setAllowCredentials(true); // Разрешаем отправку куки и заголовков авторизации
 
