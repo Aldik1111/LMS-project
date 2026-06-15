@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            min-height: 100vh;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 42px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        h2 {
+            margin-bottom: 15px;
+            color: #444;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: .3s;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 15px;
+            transition: .3s;
+        }
+
+        button:hover {
+            background: #5568d8;
+            transform: translateY(-2px);
+        }
+
+        .user-card {
+            background: #f8f9ff;
+            border-left: 5px solid #667eea;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            transition: .3s;
+        }
+
+        .user-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .role-admin {
+            color: #e63946;
+            font-weight: bold;
+        }
+
+        .role-manager {
+            color: #ff8800;
+            font-weight: bold;
+        }
+
+        .role-student {
+            color: #2a9d8f;
+            font-weight: bold;
+        }
+
+        .email {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .role {
+            margin-top: 8px;
+            display: inline-block;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>🚀 Admin Panel</h1>
+
+    <div class="card">
+
+        <h2>Создать пользователя</h2>
+
+        <input id="email" placeholder="Email">
+
+        <input
+                id="password"
+                type="password"
+                placeholder="Пароль">
+
+        <select id="role">
+            <option>ADMIN</option>
+            <option>MANAGER</option>
+            <option>STUDENT</option>
+        </select>
+
+        <button onclick="createUser()">
+            Создать пользователя
+        </button>
+
+    </div>
+
+    <div class="card">
+
+        <h2>👥 Пользователи</h2>
+
+        <div id="users"></div>
+
+    </div>
+
+</div>
+
+<script>
+
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+
+    if (!token || role !== "ADMIN") {
+        window.location.href = "login.html";
+    } else {
+        loadUsers();
+    }
+
+    async function loadUsers() {
+
+        const response = await fetch(
+            "/api/users",
+            {
+                headers: {
+                    "Authorization": "Bearer " + token
+                }
+            }
+        );
+
+        if (!response.ok) {
+            alert("Ошибка загрузки пользователей");
+            return;
+        }
+
+        const users = await response.json();
+
+        document.getElementById("users").innerHTML =
+            users.map(user => {
+
+                let roleClass = "role-student";
+
+                if (user.role === "ADMIN")
+                    roleClass = "role-admin";
+
+                if (user.role === "MANAGER")
+                    roleClass = "role-manager";
+
+                return `
+                    <div class="user-card">
+
+                        <strong>${user.fullName}</strong>
+
+                        <div class="email">
+                            ${user.email}
+                        </div>
+
+                        <div class="role ${roleClass}">
+                            ${user.role}
+                        </div>
+
+                    </div>
+                `;
+            }).join("");
+    }
+
+    async function createUser() {
+
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+        const role = document.getElementById("role").value;
+
+        const response = await fetch(
+            "/api/users",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + token
+                },
+                body: JSON.stringify({
+                    email,
+                    password,
+                    role,
+                    fullName: email,
+                    active: true
+                })
+            }
+        );
+
+        if (!response.ok) {
+            const text = await response.text();
+            alert("Ошибка: " + text);
+            return;
+        }
+
+        document.getElementById("email").value = "";
+        document.getElementById("password").value = "";
+
+        await loadUsers();
+
+        alert("Пользователь успешно создан!");
+    }
+
+</script>
+
+</body>
+</html>
