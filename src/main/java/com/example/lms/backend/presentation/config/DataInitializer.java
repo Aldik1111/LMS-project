@@ -11,24 +11,27 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-@Slf4j // Lombok: Дает поле log для логирования
+@Slf4j
 public class DataInitializer implements CommandLineRunner {
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    //CommandLineRunner - run() вызывается автоматический после старта приложения
     @Override
     public void run(String... args) {
-        if (!userRepository.existsByEmail("admin@lms.com")){
-            User admin = User.builder()
-                    .email("admin@lms.com")
-                    .password(passwordEncoder.encode("admin"))
-                    .fullName("Admin admin")
-                    .role(Role.ADMIN)
-                    .active(true)
-                    .build();
-            userRepository.save(admin);
-            log.info("Admin created: admin@lms.com / admin");
-        }
+
+        userRepository.deleteAll();
+
+        User admin = User.builder()
+                .email("admin@lms.com")
+                .password(passwordEncoder.encode("admin"))
+                .fullName("Admin")
+                .role(Role.ADMIN)
+                .active(true)
+                .build();
+
+        userRepository.save(admin);
+
+        log.info("ADMIN CREATED");
     }
 }

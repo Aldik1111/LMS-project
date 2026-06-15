@@ -1,6 +1,94 @@
 <!DOCTYPE html>
 <html>
+<head>
+    <title>Admin Panel</title>
+</head>
 <body>
-<h1>ADMIN PAGE</h1>
+
+<h1>Админ панель</h1>
+
+<h2>Создать пользователя</h2>
+
+<input id="email" placeholder="Email">
+<input id="password" placeholder="Пароль">
+
+<select id="role">
+    <option>ADMIN</option>
+    <option>MANAGER</option>
+    <option>STUDENT</option>
+</select>
+
+<button onclick="createUser()">
+    Создать пользователя
+</button>
+
+<hr>
+
+<h2>Пользователи</h2>
+
+<div id="users"></div>
+
+<script>
+
+const token = localStorage.getItem("token");
+
+loadUsers();
+
+async function loadUsers() {
+
+    const response = await fetch(
+        "http://localhost:8080/api/users",
+        {
+            headers:{
+                "Authorization":"Bearer " + token
+            }
+        }
+    );
+
+    const users = await response.json();
+
+    document.getElementById("users").innerHTML =
+        users.map(user => `
+            <p>
+                ${user.fullName}
+                (${user.email})
+                - ${user.role}
+            </p>
+        `).join("");
+}
+
+async function createUser() {
+
+    const email =
+        document.getElementById("email").value;
+
+    const password =
+        document.getElementById("password").value;
+
+    const role =
+        document.getElementById("role").value;
+
+    await fetch(
+        "http://localhost:8080/api/users",
+        {
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json",
+                "Authorization":"Bearer " + token
+            },
+            body: JSON.stringify({
+                email,
+                password,
+                role,
+                fullName: email
+            })
+        }
+    );
+
+    loadUsers();
+}
+
+</script>
+
 </body>
 </html>
