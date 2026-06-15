@@ -17,6 +17,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.http.HttpMethod;
 
 @Configuration
 @EnableWebSecurity
@@ -27,47 +28,33 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(AbstractHttpConfigurer::disable) // off csrf
+            http
+                    .csrf(AbstractHttpConfigurer::disable) // off csrf
 
-                .authorizeHttpRequests(auth -> auth
-                        // Открываем статические страницы фронта
-                        .requestMatchers(
-                                "/",
-                                "/index.html",
-                                "/login.html",
-                                "/dashboard.html",
-                                "/api.js",
-                                "/favicon.ico"
-                        ).permitAll()
-                        // Логин открыт для всех
-                        .requestMatchers("/api/auth/**").permitAll()
-                        // Всё остальное (API) требует токен
-                        .anyRequest().authenticated()
-                )
+                    .authorizeHttpRequests(auth -> auth
+                            // Preflight-запросы CORS — разрешены всегда
+                            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-/*                .authorizeHttpRequests(auth -> auth // настройка правил доступа к эндпойнтам
-//                        .requestMatchers("/api/auth/**").permitAll() // логин открыт для всех - без токена
-                        .anyRequest().authenticated() // все остальное с авторизацией
-                )
+                            .requestMatchers("/", "/*.html", "/*.js", "/favicon.ico", "/error").permitAll()
+                            .requestMatchers("/api/auth/**").permitAll()
+                            .anyRequest().authenticated()
+                    )
 
- */
+                    // Говорим Spring Security не создавать сессии
+                    // Мы используем JWT — каждый запрос самодостаточен
+                    .sessionManagement(session -> session
+                            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                    )
 
-                // Говорим Spring Security не создавать сессии
-                // Мы используем JWT — каждый запрос самодостаточен
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
+                    // Указываем наш провайдер аутентификации
+                    .authenticationProvider(authenticationProvider())
 
-                // Указываем наш провайдер аутентификации
-                .authenticationProvider(authenticationProvider())
-
-                .addFilterBefore(
-                        (jakarta.servlet.Filter) jwtFilter,
-                        UsernamePasswordAuthenticationFilter.class
-                );
-        return http.build();
-    }
+                    .addFilterBefore(
+                            (jakarta.servlet.Filter) jwtFilter,
+                            UsernamePasswordAuthenticationFilter.class
+                    );
+            return http.build();
+        }
 
     // BCrypt - алгоритм хэширования паролей
     @Bean

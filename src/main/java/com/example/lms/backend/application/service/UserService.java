@@ -42,7 +42,7 @@ public class UserService {
                 .password(passwordEncoder.encode(dto.getPassword())) // Hash password
                 .fullName(dto.getFullname())
                 .role(dto.getRole())
-                .active(true)
+                .active(dto.getActive() != null ? dto.getActive() : true)
                 .build();
 
         User saved = userRepository.save(user);
@@ -54,7 +54,7 @@ public class UserService {
 
         user.setFullName(dto.getFullname());
         user.setRole(dto.getRole());
-        user.setActive(dto.isActive());
+        user.setActive(dto.getActive() != null ? dto.getActive() : true);
 
         if(dto.getPassword() != null && !dto.getPassword().isBlank()) {
             user.setPassword(passwordEncoder.encode(dto.getPassword()));

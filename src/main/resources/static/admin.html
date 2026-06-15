@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>Admin Panel</title>
 </head>
 <body>
@@ -30,14 +31,21 @@
 
 <script>
 
-const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
 
-loadUsers();
+    // Если нет токена или роль не ADMIN — выгоняем на логин
+    if (!token || role !== "ADMIN") {
+        window.location.href = "login.html";
+    } else {
+        loadUsers();
+    }
+
 
 async function loadUsers() {
 
     const response = await fetch(
-        "http://localhost:8080/api/users",
+        "/api/users",
         {
             headers:{
                 "Authorization":"Bearer " + token
@@ -50,40 +58,38 @@ async function loadUsers() {
     document.getElementById("users").innerHTML =
         users.map(user => `
             <p>
-                ${user.fullName}
+                ${user.fullname}
                 (${user.email})
                 - ${user.role}
             </p>
         `).join("");
 }
-
 async function createUser() {
 
-    const email =
-        document.getElementById("email").value;
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const role = document.getElementById("role").value;
 
-    const password =
-        document.getElementById("password").value;
+    const response = await fetch("/api/users", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+        },
+        body: JSON.stringify({
+            email,
+            password,
+            role,
+            fullName: email,
+            active: true          // ← добавили это
+        })
+    });
 
-    const role =
-        document.getElementById("role").value;
-
-    await fetch(
-        "http://localhost:8080/api/users",
-        {
-            method:"POST",
-            headers:{
-                "Content-Type":"application/json",
-                "Authorization":"Bearer " + token
-            },
-            body: JSON.stringify({
-                email,
-                password,
-                role,
-                fullName: email
-            })
-        }
-    );
+    if (!response.ok) {
+        const text = await response.text();
+        alert("Ошибка: " + text);
+        return;
+    }
 
     loadUsers();
 }
