@@ -35,9 +35,8 @@ if(role === "ADMIN"){
 if(role === "MANAGER"){
     content.innerHTML = `
         <h2>Менеджер</h2>
-        <button>Тесты</button>
-        <button>Задания</button>
-        <button>Статистика</button>
+        <button onclick="window.location.href='manager-tests.html'">Тесты</button>
+        <button onclick="window.location.href='manager-statistics.html'">Статистика</button>
     `;
 }
 
@@ -211,8 +210,14 @@ async function submitTest(testId) {
     const result =
         await submitResponse.json();
 
-    document.getElementById("tests")
-        .innerHTML = `
+    // show correct/incorrect counts if available
+    const correct = result.correctCount !== undefined
+        ? result.correctCount
+        : (result.totalQuestions !== undefined
+            ? result.totalQuestions - (result.incorrectCount || 0)
+            : null);
+
+    let resultHtml = `
             <h2>Результат теста</h2>
 
             <p>
@@ -226,7 +231,18 @@ async function submitTest(testId) {
                 Неправильных ответов:
                 ${result.incorrectCount}
             </p>
+    `;
+
+    if(correct !== null) {
+        resultHtml += `
+            <p>
+                Правильных ответов: ${correct}
+            </p>
         `;
+    }
+
+    document.getElementById("tests")
+        .innerHTML = resultHtml;
 }
 
 function logout() {

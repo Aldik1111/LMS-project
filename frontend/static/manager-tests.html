@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Manager - Tests</title>
+    <style>
+        :root{
+            --bg:#f5f7fb;
+            --card:#ffffff;
+            --accent:#4f46e5;
+            --muted:#6b7280;
+            --danger:#ef4444;
+            font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+        }
+        body{background:var(--bg);margin:0;padding:24px;color:#111}
+        .container{max-width:1100px;margin:0 auto}
+        header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+        h1{margin:0;font-size:20px}
+        .card{background:var(--card);border-radius:12px;padding:18px;box-shadow:0 6px 18px rgba(16,24,40,0.06);margin-bottom:18px}
+        .flex{display:flex;gap:12px}
+        .tests-list button{background:transparent;border:1px solid #e6e9f2;padding:8px 12px;border-radius:8px;cursor:pointer}
+        .tests-list .row{display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:8px;border:1px solid #eef2ff;margin-bottom:8px}
+        .primary{background:var(--accent);color:#fff;padding:10px 14px;border-radius:8px;border:none;cursor:pointer}
+        .danger{background:transparent;border:1px solid var(--danger);color:var(--danger);padding:8px 10px;border-radius:8px;cursor:pointer}
+        label{display:block;font-size:14px;margin-bottom:6px;color:var(--muted)}
+        input[type=text], textarea, select{width:100%;padding:10px;border:1px solid #e6e9f2;border-radius:8px}
+        .small{font-size:13px;color:var(--muted)}
+        .questions{margin-top:12px}
+        .question{border:1px dashed #e6eefc;padding:12px;border-radius:10px;margin-bottom:12px}
+        .answers .answer{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+        .answers input[type=text]{flex:1}
+        .chip{display:inline-block;padding:6px 8px;background:#eef2ff;border-radius:999px;color:var(--accent);font-weight:600}
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>Управление тестами</h1>
+        <div>
+            <button onclick="window.location.href='dashboard.html'" class="tests-btn">Назад</button>
+        </div>
+    </header>
+
+    <div class="card">
+        <h3>Существующие тесты</h3>
+        <div id="testsList" class="tests-list"></div>
+    </div>
+
+    <div class="card">
+        <h3>Создать новый тест</h3>
+        <div>
+            <label>Название теста</label>
+            <input id="testTitle" type="text" placeholder="Например: Математика - Контрольная 1">
+        </div>
+
+        <div class="questions">
+            <h4>Вопросы</h4>
+            <div id="questionsContainer"></div>
+            <div style="margin-top:8px">
+                <button id="addQuestionBtn" class="primary">Добавить вопрос</button>
+            </div>
+        </div>
+
+        <div style="margin-top:14px">
+            <button id="createTestBtn" class="primary">Создать тест</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+
+    async function loadTests(){
+        const res = await fetch('/api/tests', {headers:{'Authorization':'Bearer '+token}});
+        if(!res.ok){
+            document.getElementById('testsList').innerText = 'Ошибка загрузки тестов: ' + res.status;
+            return;
+        }
+        const tests = await res.json();
+        const container = document.getElementById('testsList');
+        container.innerHTML = '';
+        tests.forEach(t=>{
+            const row = document.createElement('div');row.className='row';
+            const left = document.createElement('div');left.innerHTML = `<strong>${escapeHtml(t.title)}</strong>` + (t.description?`<div class="small">${escapeHtml(t.description)}</div>`:'');
+            const right = document.createElement('div');
+            const openBtn = document.createElement('button');openBtn.textContent='Открыть';openBtn.onclick=()=>openTest(t.id);
+            const delBtn = document.createElement('button');delBtn.textContent='Удалить';delBtn.className='danger';delBtn.onclick=()=>deleteTest(t.id);
+            right.appendChild(openBtn);right.appendChild(delBtn);
+            row.appendChild(left);row.appendChild(right);
+            container.appendChild(row);
+        });
+    }
+
+    function escapeHtml(s){return String(s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');}
+
+    async function deleteTest(id){
+        if(!confirm('Удалить тест #' + id + '?'))return;
+        const res = await fetch('/api/tests/'+id,{method:'DELETE',headers:{'Authorization':'Bearer '+token}});
+        if(res.ok){loadTests();}else{alert('Не удалось удалить: '+res.status)}
+    }
+
+    function openTest(id){
+        // simple viewer: fetch test and show details in modal-like card
+        fetch('/api/tests/'+id,{headers:{'Authorization':'Bearer '+token}}).then(r=>r.json()).then(test=>{
+            const html = document.createElement('div');html.className='card';
+            html.innerHTML = `<h3>${escapeHtml(test.title)}</h3>`;
+            test.questions.forEach(q=>{
+                const qDiv = document.createElement('div');qDiv.className='question';
+                qDiv.innerHTML = `<strong>${escapeHtml(q.questionText)}</strong>`;
+                q.answers.forEach(a=>{qDiv.innerHTML += `<div class="small">${escapeHtml(a.label)}. ${escapeHtml(a.answerText)} ${a.correct?'<span class="chip">Правильно</span>':''}</div>`});
+                html.appendChild(qDiv);
+            });
+            // replace container content temporarily
+            const cont = document.querySelector('.container');
+            cont.insertBefore(html, cont.firstChild);
+            setTimeout(()=>html.scrollIntoView({behavior:'smooth'}),100);
+            // auto remove after 8s
+            setTimeout(()=>html.remove(),8000);
+        }).catch(e=>alert('Ошибка: '+e));
+    }
+
+    // create test UI logic
+    const questionsContainer = document.getElementById('questionsContainer');
+    document.getElementById('addQuestionBtn').addEventListener('click', addQuestion);
+    document.getElementById('createTestBtn').addEventListener('click', createTest);
+
+    function addQuestion(){
+        const qId = Date.now()+Math.floor(Math.random()*1000);
+        const qDiv = document.createElement('div');qDiv.className='question';qDiv.dataset.qid=qId;
+        qDiv.innerHTML = `
+            <label>Вопрос</label>
+            <input type="text" class="q-text" placeholder="Текст вопроса">
+            <div class="answers">
+                <label>Ответы</label>
+                <div class="answers-list"></div>
+                <div style="margin-top:6px">
+                    <button class="addAnswerBtn">Добавить ответ</button>
+                </div>
+            </div>
+            <div style="margin-top:6px">
+                <button class="removeQuestionBtn">Удалить вопрос</button>
+            </div>
+        `;
+        questionsContainer.appendChild(qDiv);
+
+        const answersList = qDiv.querySelector('.answers-list');
+        const addAnswerBtn = qDiv.querySelector('.addAnswerBtn');
+        addAnswerBtn.addEventListener('click',()=>addAnswer(answersList));
+        qDiv.querySelector('.removeQuestionBtn').addEventListener('click',()=>qDiv.remove());
+        // add default four answers
+        ['A','B','C','D'].forEach(label=>addAnswer(answersList,label));
+    }
+
+    function addAnswer(container,label){
+        const aDiv = document.createElement('div');aDiv.className='answer';
+        aDiv.innerHTML = `
+            <input type="radio" name="correct_${container.closest('.question').dataset.qid}" class="correct-radio">
+            <input type="text" class="a-text" placeholder="Текст ответа">
+            <select class="a-label"><option>A</option><option>B</option><option>C</option><option>D</option></select>
+            <button class="removeAnswerBtn">Удалить</button>
+        `;
+        container.appendChild(aDiv);
+        const removeBtn = aDiv.querySelector('.removeAnswerBtn'); removeBtn.addEventListener('click',()=>aDiv.remove());
+        const sel = aDiv.querySelector('.a-label'); if(label) sel.value = label;
+    }
+
+    async function createTest(){
+        const title = document.getElementById('testTitle').value.trim();
+        if(!title){alert('Введите название');return;}
+        const questions = [];
+        document.querySelectorAll('.question').forEach(q=>{
+            const questionText = q.querySelector('.q-text').value.trim();
+            if(!questionText) return;
+            const answers = [];
+            let correctLabel = null;
+            q.querySelectorAll('.answer').forEach(ans=>{
+                const text = ans.querySelector('.a-text').value.trim();
+                const label = ans.querySelector('.a-label').value;
+                const radio = ans.querySelector('.correct-radio');
+                if(radio.checked) correctLabel = label;
+                if(text) answers.push({label,answerText:text});
+            });
+            // mark correct flag on answers by label
+            answers.forEach(a=>a.correct = (a.label===correctLabel));
+            questions.push({questionText,answers});
+        });
+        if(questions.length===0){alert('Добавьте хотя бы один вопрос с ответами');return;}
+
+        const payload = {
+    title,
+    description: "",
+    questions
+};
+
+const res = await fetch('/api/tests', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+    },
+    body: JSON.stringify(payload)
+});
+
+if(res.ok){
+    alert('Тест создан');
+    document.getElementById('testTitle').value = '';
+    questionsContainer.innerHTML = '';
+    loadTests();
+} else {
+    alert('Ошибка создания: ' + res.status);
+}
+}
+
+    // init
+    loadTests();
+</script>
+</body>
+</html>
