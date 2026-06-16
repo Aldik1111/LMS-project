@@ -11,6 +11,8 @@ import com.example.lms.backend.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,6 +24,7 @@ public class AssignmentService {
     private final UserRepository userRepository;
     private final TestRepository testRepository;
 
+    @Transactional(readOnly = true)
     public List<AssignmentDto> getAllAssignments() { // For manager
         return assignmentRepository.findAll()
                 .stream()
@@ -29,6 +32,7 @@ public class AssignmentService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<AssignmentDto> getAssignmentsForStudents(Long studentId){ // For students
         return assignmentRepository.findAllByStudentId(studentId)
                 .stream()

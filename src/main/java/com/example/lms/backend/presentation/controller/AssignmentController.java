@@ -46,11 +46,21 @@ public class AssignmentController {
     }
 
     // DELETE /api/assignments/{id}
-    @DeleteMapping
-    public ResponseEntity<Void> deleteAssignment(@RequestBody Long id) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteAssignment(@PathVariable Long id) {
         try {
             assignmentService.deleteAssignment(id);
             return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    // PUT /api/assignments/{id}/complete
+    @PutMapping("/{id}/complete")
+    public ResponseEntity<AssignmentDto> completeAssignment(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(assignmentService.completeAssignment(id));
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }

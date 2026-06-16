@@ -179,24 +179,28 @@
     // ===== ОПЦИИ ДЛЯ ФОРМ =====
 
     async function loadFormOptions() {
+        // Загружаем студентов и тесты независимо — ошибка одного не блокирует другого
         try {
             const students = await apiGet("/users/students");
             document.getElementById("assignStudent").innerHTML = students.length
                 ? students.map(s => `<option value="${s.id}">${escapeHtml(s.fullName)} (${escapeHtml(s.email)})</option>`).join("")
-                : `<option value="">Нет студентов</option>`;
+                : `<option value="">Нет студентов — создайте их в панели администратора</option>`;
+        } catch (err) {
+            document.getElementById("assignStudent").innerHTML = `<option value="">Ошибка загрузки: ${err.message}</option>`;
+        }
 
+        try {
             const tests = await apiGet("/tests");
             const testOptions = tests.map(t => `<option value="${t.id}">${escapeHtml(t.title)}</option>`).join("");
-
             document.getElementById("assignTest").innerHTML = `<option value="">Без теста</option>` + testOptions;
             document.getElementById("statsTest").innerHTML = `<option value="">Выберите тест</option>` + testOptions;
-
-            const deadline = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-            deadline.setMinutes(deadline.getMinutes() - deadline.getTimezoneOffset());
-            document.getElementById("assignDeadline").value = deadline.toISOString().slice(0, 16);
         } catch (err) {
-            console.error(err);
+            document.getElementById("assignTest").innerHTML = `<option value="">Ошибка загрузки тестов: ${err.message}</option>`;
         }
+
+        const deadline = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        deadline.setMinutes(deadline.getMinutes() - deadline.getTimezoneOffset());
+        document.getElementById("assignDeadline").value = deadline.toISOString().slice(0, 16);
     }
 
     // ===== СОЗДАНИЕ ЗАДАНИЯ =====
