@@ -22,8 +22,10 @@
         <input type="text" id="testTitle" placeholder="Название теста">
         <input type="text" id="testDescription" placeholder="Описание (необязательно)">
         <div id="questions"></div>
-        <button class="secondary" onclick="addQuestion()">+ Вопрос</button>
-        <button onclick="createTest()" style="margin-left:8px;">Сохранить тест</button>
+        <div class="btn-group">
+            <button class="secondary" onclick="addQuestion()">+ Вопрос</button>
+            <button onclick="createTest()">Сохранить тест</button>
+        </div>
         <div id="testError" class="error-text"></div>
     </div>
 
@@ -39,7 +41,7 @@
         <select id="assignStudent"><option value="">Загрузка студентов…</option></select>
         <select id="assignTest"><option value="">Без теста</option></select>
         <input type="datetime-local" id="assignDeadline">
-        <button onclick="createAssignment()">Создать задание</button>
+        <button class="full" onclick="createAssignment()">Создать задание</button>
         <div id="assignError" class="error-text"></div>
     </div>
 
