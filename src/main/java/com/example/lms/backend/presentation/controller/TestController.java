@@ -73,7 +73,7 @@ public class TestController {
             TestResultDto result = testService.submitTest(request, currentUser.getId());
             return ResponseEntity.ok(result);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage()); // текст ошибки видно фронту
         }
     }
 }

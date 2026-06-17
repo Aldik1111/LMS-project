@@ -23,6 +23,7 @@ public class TestService {
     private final UserRepository userRepository;
     private final TestResultRepository testResultRepository;
     private final AnswerRepository answerRepository;
+    private final AssignmentRepository assignmentRepository;
     private final StudentAnswerRepository studentAnswerRepository;
 
     public List<TestDto> getAllTests(){
@@ -104,13 +105,27 @@ public class TestService {
         Test test = testRepository.findByIdWithQuestions(request.getTestId())
                 .orElseThrow(() -> new RuntimeException("Test not found"));
 
+        User student = userRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+
+
+        // Проверка дедлайна
+        List<Assignment> studentAssignments = assignmentRepository.findAllByStudentId(studentId);
+        Assignment relatedAssignment = studentAssignments.stream()
+                .filter(a -> a.getTest() != null && a.getTest().getId().equals(request.getTestId()))
+                .findFirst()
+                .orElse(null);
+        if (relatedAssignment != null
+            && relatedAssignment.getDeadline() != null
+            && relatedAssignment.getDeadline().isBefore(java.time.LocalDateTime.now())) {
+            throw new RuntimeException("Deadline time is out!: " + relatedAssignment.getDeadline());
+        }
+
         // Догружаем ответы отдельным запросом
         List<Question> questionsWithAnswers = questionRepository.findByTestIdWithAnswers(request.getTestId());
         test.getQuestions().clear();
         test.getQuestions().addAll(questionsWithAnswers);
 
-        User student = userRepository.findById(studentId)
-                .orElseThrow(() -> new RuntimeException("Student not found"));
 
         // Create result of test
         TestResult result = TestResult.builder()

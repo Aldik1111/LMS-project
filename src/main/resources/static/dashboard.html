@@ -122,7 +122,7 @@
         }
 
         const result = await apiPost(`/tests/${testId}/submit`, { answers });
-        if (!result.ok) { alert("Ошибка отправки теста: " + result.text); return; }
+        if (!result.ok) { alert(result.data || "Не удалось отправить тест — возможно срок истёк"); return; }
 
         const r = result.data;
 
