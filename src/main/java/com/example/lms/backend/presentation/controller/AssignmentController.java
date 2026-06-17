@@ -65,5 +65,4 @@ public class AssignmentController {
             return ResponseEntity.notFound().build();
         }
     }
-
 }

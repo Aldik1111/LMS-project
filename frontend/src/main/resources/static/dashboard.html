@@ -124,7 +124,7 @@
         }
 
         const result = await apiPost(`/tests/${testId}/submit`, { answers });
-        if (!result.ok) { alert("Ошибка отправки теста: " + result.text); return; }
+        if (!result.ok) {alert("Ошибка отправки теста: " + result.text); return; }
 
         const r = result.data;
 
