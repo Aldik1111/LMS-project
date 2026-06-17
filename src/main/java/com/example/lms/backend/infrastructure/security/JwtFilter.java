@@ -41,7 +41,6 @@ public class JwtFilter extends OncePerRequestFilter {
 
         // remove "Bearer " (7 symbols)
         String token = authHeader.substring(7);
-        System.out.println("Token = " + token);//////////
 
         if (!jwtUtil.isTokenValid(token)) {
             filterChain.doFilter(request, response);
@@ -50,7 +49,6 @@ public class JwtFilter extends OncePerRequestFilter {
 
         // get email from token
         String email = jwtUtil.extractEmail(token);
-        System.out.println("Email from token = " + email);/////////
 
         // if user not auth
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {

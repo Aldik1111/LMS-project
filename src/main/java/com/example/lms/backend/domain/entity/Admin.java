@@ -7,7 +7,8 @@ import lombok.experimental.SuperBuilder;
 @Entity
 @Table(name = "admins")
 @DiscriminatorValue("ADMIN")
-@Data
+@Getter
+@Setter
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @SuperBuilder

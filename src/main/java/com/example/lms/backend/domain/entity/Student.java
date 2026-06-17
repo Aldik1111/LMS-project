@@ -7,8 +7,10 @@ import lombok.experimental.SuperBuilder;
 @Entity
 @Table(name = "students")
 @DiscriminatorValue("STUDENT")
-@Data
-@EqualsAndHashCode(callSuper=true)
+@Getter
+@Setter
+@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
 @SuperBuilder
 
 public class Student extends User {
