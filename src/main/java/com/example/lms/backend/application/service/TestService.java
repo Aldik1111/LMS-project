@@ -36,8 +36,9 @@ public class TestService {
         Test test = testRepository.findByIdWithQuestions(testId)
                 .orElseThrow(() -> new RuntimeException("Test not found"));
 
-        List<Question> questionWithAnswers = questionRepository.findByTestIdWithAnswers(testId);
-        test.setQuestions(questionWithAnswers);
+         List<Question> questionWithAnswers = questionRepository.findByTestIdWithAnswers(testId);
+        test.getQuestions().clear();
+        test.getQuestions().addAll(questionWithAnswers);
 
         return toDtoFull(test, isStudent);
     }
@@ -99,12 +100,14 @@ public class TestService {
 
     @Transactional
     public TestResultDto submitTest(TestSubmitRequest request, Long studentId){
-        // Load test
+        // Load test (через новый безопасный метод)
         Test test = testRepository.findByIdWithQuestions(request.getTestId())
                 .orElseThrow(() -> new RuntimeException("Test not found"));
 
-        List<Question> questionWithAnswers = questionRepository.findByTestIdWithAnswers(request.getTestId());
-        test.setQuestions(questionWithAnswers);
+        // Догружаем ответы отдельным запросом
+        List<Question> questionsWithAnswers = questionRepository.findByTestIdWithAnswers(request.getTestId());
+        test.getQuestions().clear();
+        test.getQuestions().addAll(questionsWithAnswers);
 
         User student = userRepository.findById(studentId)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -125,25 +128,25 @@ public class TestService {
 
         for (TestSubmitRequest.StudentAnswerDto answerDto : request.getAnswers()) {
 
-            Question question = test.getQuestions().stream() // search question
+            Question question = test.getQuestions().stream()
                     .filter(q -> q.getId().equals(answerDto.getQuestionId()))
                     .findFirst()
                     .orElseThrow(() -> new RuntimeException("Question not found"));
 
-            Answer selectedAnswer = question.getAnswers().stream()// search selected answer
+            Answer selectedAnswer = question.getAnswers().stream()
                     .filter(a -> a.getId().equals(answerDto.getSelectedAnswerId()))
                     .findFirst()
                     .orElseThrow(() -> new RuntimeException("Answer not found"));
 
-            Answer correctAnswer = question.getAnswers().stream() // search true answer
+            Answer correctAnswer = question.getAnswers().stream()
                     .filter(Answer::isCorrect)
                     .findFirst()
                     .orElse(null);
 
-            boolean isCorrect = selectedAnswer.isCorrect();
+            boolean isCorrect = selectedAnswer.isCorrect(); // используем selectedAnswer, не correctAnswer
+
             if(isCorrect) correctCount++;
 
-            // Save student answer
             StudentAnswer studentAnswer = StudentAnswer.builder()
                     .testResult(savedResult)
                     .question(question)
@@ -153,18 +156,16 @@ public class TestService {
 
             studentAnswerRepository.save(studentAnswer);
 
-            // add details for show student
             details.add(new TestResultDto.AnswerDetailDto(
                     question.getQuestionText(),
                     selectedAnswer.getLabel() + ". " + selectedAnswer.getAnswerText(),
                     correctAnswer != null
-                                ? correctAnswer.getLabel() + ". " + correctAnswer.getAnswerText()
-                                : "-",
+                            ? correctAnswer.getLabel() + ". " + correctAnswer.getAnswerText()
+                            : "-",
                     isCorrect
             ));
         }
 
-        // update result
         savedResult.setScore(correctCount);
         testResultRepository.save(savedResult);
 
