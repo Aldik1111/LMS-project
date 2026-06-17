@@ -22,7 +22,9 @@
     requireAuth();
 
     const role = getRole();
-    document.getElementById("userInfo").textContent = `${getFullName()} · ${role}`;
+    const name = getFullName();
+    const displayName = (name && name !== 'undefined' && name !== 'null') ? name : '';
+    document.getElementById("userInfo").textContent = displayName ? `${displayName} · ${role}` : role;
 
     const content = document.getElementById("content");
 
@@ -67,17 +69,17 @@
                 <div>
                     <div><b>${escapeHtml(a.title)}</b></div>
                     <div class="muted">${escapeHtml(a.description || "")}</div>
-                    <div class="muted">Тест: ${escapeHtml(a.testTitle || "—")} · Срок: ${formatDate(a.deadline)}</div>
+                    <div class="muted">Тест: ${escapeHtml(a.testTitle || "-")} · Срок: ${formatDate(a.deadline)}</div>
                 </div>
                 <div>
                     ${a.status === "COMPLETED"
-                ? `<span class="badge success">Выполнено</span>`
-                : a.testId
-                    ? `<button onclick="openTest(${a.testId}, ${a.id})">Пройти тест</button>`
-                    : `<button onclick="completeAssignment(${a.id})">Отметить выполненным</button>`}
+                        ? `<span class="badge success">Выполнено</span>`
+                        : a.testId
+                            ? `<button onclick="openTest(${a.testId}, ${a.id})">Пройти тест</button>`
+                            : `<button onclick="completeAssignment(${a.id})">Отметить выполненным</button>`}
                 </div>
             </div>`).join("");
-        } catch (err) {
+                } catch (err) {
             document.getElementById("assignments").textContent = "Ошибка: " + err.message;
         }
     }
@@ -122,7 +124,7 @@
         }
 
         const result = await apiPost(`/tests/${testId}/submit`, { answers });
-        if (!result.ok) { alert(result.data || "Не удалось отправить тест — возможно срок истёк"); return; }
+        if (!result.ok) { alert("Ошибка отправки теста: " + result.text); return; }
 
         const r = result.data;
 

@@ -14,4 +14,5 @@ public class UserDto {
     private String fullName;
     private String role;
     private Boolean active;
+    private String group;
 }

@@ -424,7 +424,7 @@
                 <div class="form-panel-body" id="assignForm">
                     <input type="text" id="assignTitle" placeholder="Название задания">
                     <input type="text" id="assignDescription" placeholder="Описание (необязательно)">
-                    <select id="assignStudent"><option value="">Загрузка студентов…</option></select>
+                    <select id="assignGroup"><option value="">Загрузка групп…</option></select>
                     <select id="assignTest"><option value="">Без теста</option></select>
                     <input type="datetime-local" id="assignDeadline">
                     <button class="full" onclick="createAssignment()">Создать задание</button>
@@ -617,53 +617,46 @@
     // ===== FORM OPTIONS =====
     async function loadFormOptions() {
         try {
-            const students = await apiGet('/users/students');
-            document.getElementById('stat-students').textContent = students.length;
-            document.getElementById('assignStudent').innerHTML = students.length
-                ? students.map(s => `<option value="${s.id}">${escapeHtml(s.fullName)} (${escapeHtml(s.email)})</option>`).join('')
-                : '<option value="">Нет студентов — создайте в панели администратора</option>';
-        } catch (err) {
-            document.getElementById('assignStudent').innerHTML = `<option value="">Ошибка: ${err.message}</option>`;
-        }
+            const groups = await apiGet("/users/groups");
+            document.getElementById("assignGroup").innerHTML = groups.length
+                ? groups.map(g => `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join("")
+                : `<option value="">Нет групп</option>`;
 
-        try {
-            const tests = await apiGet('/tests');
-            const opts = tests.map(t => `<option value="${t.id}">${escapeHtml(t.title)}</option>`).join('');
-            document.getElementById('assignTest').innerHTML = `<option value="">Без теста</option>` + opts;
-            document.getElementById('statsTest').innerHTML = `<option value="">Выберите тест для просмотра</option>` + opts;
-        } catch (err) {
-            document.getElementById('assignTest').innerHTML = `<option value="">Ошибка загрузки тестов</option>`;
-        }
+            const tests = await apiGet("/tests");
+            const testOptions = tests.map(t => `<option value="${t.id}">${escapeHtml(t.title)}</option>`).join("");
 
-        const d = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-        document.getElementById('assignDeadline').value = d.toISOString().slice(0, 16);
+            document.getElementById("assignTest").innerHTML = `<option value="">Без теста</option>` + testOptions;
+            document.getElementById("statsTest").innerHTML = `<option value="">Выберите тест</option>` + testOptions;
+
+            const deadline = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+            deadline.setMinutes(deadline.getMinutes() - deadline.getTimezoneOffset());
+            document.getElementById("assignDeadline").value = deadline.toISOString().slice(0, 16);
+        } catch (err) {
+            console.error(err);
+        }
     }
 
-    // ===== CREATE ASSIGNMENT =====
     async function createAssignment() {
-        const title      = document.getElementById('assignTitle').value.trim();
-        const description = document.getElementById('assignDescription').value.trim();
-        const studentId  = document.getElementById('assignStudent').value;
-        const testId     = document.getElementById('assignTest').value;
-        const deadline   = document.getElementById('assignDeadline').value;
-        const errorEl    = document.getElementById('assignError');
-        errorEl.textContent = '';
+        const title = document.getElementById("assignTitle").value.trim();
+        const description = document.getElementById("assignDescription").value.trim();
+        const targetGroup = document.getElementById("assignGroup").value;
+        const testId = document.getElementById("assignTest").value;
+        const deadline = document.getElementById("assignDeadline").value;
+        const errorEl = document.getElementById("assignError");
+        errorEl.textContent = "";
 
-        if (!title || !studentId || !deadline) { errorEl.textContent = 'Заполните название, студента и срок'; return; }
+        if (!title || !targetGroup || !deadline) { errorEl.textContent = "Заполните название, выберите группу и срок"; return; }
 
-        const res = await apiPost('/assignments', {
-            title, description,
-            studentId: Number(studentId),
+        const result = await apiPost("/assignments", {
+            title, description, targetGroup,
             testId: testId ? Number(testId) : null,
-            deadline: deadline + ':00'
+            deadline: deadline + ":00"
         });
 
-        if (!res.ok) { errorEl.textContent = 'Ошибка: ' + res.text; return; }
+        if (!result.ok) { errorEl.textContent = "Ошибка: " + result.text; return; }
 
-        document.getElementById('assignTitle').value = '';
-        document.getElementById('assignDescription').value = '';
-        toggleForm('assignForm');
+        document.getElementById("assignTitle").value = "";
+        document.getElementById("assignDescription").value = "";
         loadAssignments();
     }
 

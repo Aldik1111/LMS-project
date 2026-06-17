@@ -1,11 +1,7 @@
 package com.example.lms.backend.application.service;
 
 import com.example.lms.backend.application.dto.UserDto;
-import com.example.lms.backend.domain.entity.Admin;
-import com.example.lms.backend.domain.entity.Manager;
-import com.example.lms.backend.domain.entity.Student;
-import com.example.lms.backend.domain.entity.User;
-import com.example.lms.backend.domain.entity.RoleResolve;
+import com.example.lms.backend.domain.entity.*;
 import com.example.lms.backend.domain.repository.StudentRepository;
 import com.example.lms.backend.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -71,7 +67,7 @@ public class UserService {
                     .password(encodedPassword)
                     .fullName(dto.getFullName())
                     .active(isActive)
-                    .groupNumber("General")
+                    .groupNumber(dto.getGroup() != null ? dto.getGroup() : "N/A")
                     .build();
             default -> throw new RuntimeException("Invalid role: " + dto.getRole());
         };
@@ -106,14 +102,26 @@ public class UserService {
         return toDto(user);
     }
 
+    public List<String> getAllGroups() {
+        return studentRepository.findAll()
+                .stream()
+                .map(Student::getGroupNumber)
+                .filter(g -> g != null && !g.isBlank())
+                .distinct()
+                .sorted()
+                .collect(Collectors.toUnmodifiableList());
+    }
+
     private UserDto toDto(User user) {
+        String group = (user instanceof Student s) ? s.getGroupNumber() : null;
         return new UserDto(
                 user.getId(),
                 user.getEmail(),
                 null, // password
                 user.getFullName(),
                 RoleResolve.resolve(user),
-                user.isActive()
+                user.isActive(),
+                group
         );
     }
 }

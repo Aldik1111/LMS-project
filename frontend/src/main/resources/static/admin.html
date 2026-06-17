@@ -22,11 +22,12 @@
         <input type="email" id="newEmail" placeholder="Email">
         <input type="password" id="newPassword" placeholder="Пароль">
         <input type="text" id="newFullName" placeholder="Имя и фамилия">
-        <select id="newRole">
+        <select id="newRole" onchange="toggleGroupField()">
             <option value="STUDENT">Студент</option>
             <option value="MANAGER">Менеджер</option>
             <option value="ADMIN">Администратор</option>
         </select>
+        <input type="text" id="newGroup" placeholder="Группа (например: IT-101)">
         <button onclick="createUser()">Создать</button>
         <div id="createError" class="error-text"></div>
     </div>
@@ -55,9 +56,9 @@
             const users = await apiGet("/users");
             document.getElementById("usersBody").innerHTML = users.map(u => `
             <tr>
-                <td>${escapeHtml(u.fullName) || "—"}</td>
+                <td>${escapeHtml(u.fullName) || "-"}</td>
                 <td>${escapeHtml(u.email)}</td>
-                <td>${roleLabel(u.role)}</td>
+                <td>${roleLabel(u.role)}${u.group ? " (" + escapeHtml(u.group) + ")" : ""}</td>
                 <td>${u.active ? '<span class="badge success">Активен</span>' : '<span class="badge pending">Отключён</span>'}</td>
                 <td><button class="danger" onclick="deleteUser(${u.id})">Удалить</button></td>
             </tr>`).join("");
@@ -66,17 +67,28 @@
         }
     }
 
+    function toggleGroupField() {
+        const role = document.getElementById("newRole").value;
+        document.getElementById("newGroup").style.display = role === "STUDENT" ? "block" : "none";
+    }
+    toggleGroupField(); // вызвать сразу при загрузке
+
     async function createUser() {
         const email = document.getElementById("newEmail").value.trim();
         const password = document.getElementById("newPassword").value;
         const fullName = document.getElementById("newFullName").value.trim();
         const role = document.getElementById("newRole").value;
+        const group = document.getElementById("newGroup").value.trim();
         const errorEl = document.getElementById("createError");
         errorEl.textContent = "";
 
         if (!email || !password || !fullName) { errorEl.textContent = "Заполните все поля"; return; }
+        if (role === "STUDENT" && !group) { errorEl.textContent = "Укажите группу для студента"; return; }
 
-        const result = await apiPost("/users", { email, password, fullName, role, active: true });
+        const result = await apiPost("/users", {
+            email, password, fullName, role, active: true,
+            group: role === "STUDENT" ? group : null
+        });
 
         if (!result.ok) {
             errorEl.textContent = result.status === 400 ? "Email уже используется" : "Ошибка: " + result.text;
@@ -86,6 +98,7 @@
         document.getElementById("newEmail").value = "";
         document.getElementById("newPassword").value = "";
         document.getElementById("newFullName").value = "";
+        document.getElementById("newGroup").value = "";
         loadUsers();
     }
 

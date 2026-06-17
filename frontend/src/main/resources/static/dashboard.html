@@ -69,17 +69,17 @@
                 <div>
                     <div><b>${escapeHtml(a.title)}</b></div>
                     <div class="muted">${escapeHtml(a.description || "")}</div>
-                    <div class="muted">Тест: ${escapeHtml(a.testTitle || "—")} · Срок: ${formatDate(a.deadline)}</div>
+                    <div class="muted">Тест: ${escapeHtml(a.testTitle || "-")} · Срок: ${formatDate(a.deadline)}</div>
                 </div>
                 <div>
                     ${a.status === "COMPLETED"
-                ? `<span class="badge success">Выполнено</span>`
-                : a.testId
-                    ? `<button onclick="openTest(${a.testId}, ${a.id})">Пройти тест</button>`
-                    : `<button onclick="completeAssignment(${a.id})">Отметить выполненным</button>`}
+                        ? `<span class="badge success">Выполнено</span>`
+                        : a.testId
+                            ? `<button onclick="openTest(${a.testId}, ${a.id})">Пройти тест</button>`
+                            : `<button onclick="completeAssignment(${a.id})">Отметить выполненным</button>`}
                 </div>
             </div>`).join("");
-        } catch (err) {
+                } catch (err) {
             document.getElementById("assignments").textContent = "Ошибка: " + err.message;
         }
     }

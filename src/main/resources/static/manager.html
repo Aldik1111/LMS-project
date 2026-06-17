@@ -4,221 +4,651 @@
     <meta charset="UTF-8">
     <title>LMS — Менеджер</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        html, body { height: 100%; margin: 0; display: flex; }
+
+        /* ===== SIDEBAR ===== */
+        .mgr-sidebar {
+            width: 234px; min-height: 100vh; flex-shrink: 0;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex; flex-direction: column;
+            position: fixed; top: 0; left: 0; bottom: 0;
+            z-index: 100; overflow-y: auto;
+        }
+
+        .mgr-logo {
+            padding: 20px 18px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; gap: 11px;
+            flex-shrink: 0;
+        }
+        .mgr-logo-mark {
+            width: 34px; height: 34px; border-radius: 9px;
+            background: var(--accent);
+            box-shadow: 0 0 18px var(--accent-ring);
+            display: flex; align-items: center; justify-content: center;
+            font-family: var(--font-display); font-weight: 800;
+            font-size: 15px; color: #fff; flex-shrink: 0;
+        }
+        .mgr-logo-text {
+            font-family: var(--font-display); font-size: 15px;
+            font-weight: 700; color: var(--text);
+        }
+        .mgr-logo-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+        .mgr-nav {
+            flex: 1; padding: 10px 10px;
+            display: flex; flex-direction: column; gap: 1px;
+        }
+        .mgr-nav-label {
+            font-size: 10px; font-weight: 600; letter-spacing: .08em;
+            color: var(--text-faint); text-transform: uppercase;
+            padding: 10px 10px 4px;
+        }
+        .mgr-nav-btn {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 11px; border-radius: 9px;
+            font-size: 14px; font-weight: 500; color: var(--text-muted);
+            background: none; border: none; cursor: pointer;
+            transition: all .15s; width: 100%; text-align: left;
+            font-family: var(--font-body); box-shadow: none;
+        }
+        .mgr-nav-btn:hover {
+            background: var(--surface-2) !important;
+            color: var(--text) !important;
+            transform: none; box-shadow: none !important;
+        }
+        .mgr-nav-btn.active {
+            background: var(--accent-soft) !important;
+            color: var(--accent) !important; font-weight: 600;
+            box-shadow: none !important;
+        }
+        .mgr-nav-btn:active { transform: none; }
+        .nav-ico { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; }
+        .nav-label { flex: 1; }
+        .nav-chip {
+            background: var(--surface-2); border: 1px solid var(--border);
+            color: var(--text-muted); font-size: 11px; font-weight: 700;
+            padding: 1px 7px; border-radius: 20px;
+        }
+        .mgr-nav-btn.active .nav-chip {
+            background: var(--accent-soft); border-color: var(--accent-ring);
+            color: var(--accent);
+        }
+
+        /* Sidebar user block */
+        .mgr-user {
+            border-top: 1px solid var(--border); padding: 14px 12px; flex-shrink: 0;
+        }
+        .mgr-user-row {
+            display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+        }
+        .mgr-avatar {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: var(--accent-soft); border: 2px solid var(--accent-ring);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 700; color: var(--accent); flex-shrink: 0;
+        }
+        .mgr-uname { font-size: 13px; font-weight: 600; color: var(--text); }
+        .mgr-urole {
+            font-size: 11px; color: var(--text-muted);
+            background: var(--surface-2); border: 1px solid var(--border);
+            padding: 1px 7px; border-radius: 20px; display: inline-block; margin-top: 2px;
+        }
+        .btn-logout {
+            width: 100%; background: transparent !important; border: 1px solid var(--border);
+            color: var(--danger) !important; font-size: 13px; font-weight: 500;
+            padding: 8px 12px; box-shadow: none !important;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .btn-logout:hover {
+            background: var(--danger-bg) !important; border-color: var(--danger);
+            box-shadow: none !important;
+        }
+        .btn-logout:active { transform: none; }
+
+        /* ===== MAIN ===== */
+        .mgr-main {
+            margin-left: 234px; flex: 1; min-height: 100vh;
+            display: flex; flex-direction: column;
+        }
+        .mgr-topbar {
+            padding: 16px 28px; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(27,23,20,.85); backdrop-filter: blur(14px);
+            position: sticky; top: 0; z-index: 50; flex-shrink: 0;
+        }
+        .mgr-topbar-left { display: flex; align-items: center; gap: 12px; }
+        .btn-back {
+            background: transparent !important; border: 1px solid var(--border);
+            color: var(--text-muted) !important; font-size: 13px;
+            padding: 7px 12px; box-shadow: none !important;
+        }
+        .btn-back:hover {
+            background: var(--surface-2) !important; color: var(--text) !important;
+            box-shadow: none !important;
+        }
+        .btn-back:active { transform: none; }
+        .mgr-page-title {
+            font-family: var(--font-display); font-size: 18px;
+            font-weight: 700; letter-spacing: -.02em;
+        }
+        .mgr-content { padding: 26px 28px 56px; overflow-y: auto; }
+
+        /* ===== STATS GRID ===== */
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(3,1fr); gap: 14px;
+            margin-bottom: 22px;
+        }
+        .stat-card {
+            background: linear-gradient(155deg, var(--surface), var(--bg-soft));
+            border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 18px 20px; position: relative; overflow: hidden;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .stat-card::before {
+            content: ''; position: absolute; top: -24px; right: -20px;
+            width: 72px; height: 72px; border-radius: 50%;
+            background: var(--accent-soft);
+        }
+        .stat-card:hover { border-color: var(--accent); box-shadow: var(--shadow); }
+        .stat-ico { font-size: 18px; margin-bottom: 9px; }
+        .stat-lbl {
+            font-size: 10px; font-weight: 600; text-transform: uppercase;
+            letter-spacing: .07em; color: var(--text-muted); margin-bottom: 5px;
+        }
+        .stat-val {
+            font-family: var(--font-display); font-size: 30px;
+            font-weight: 700; line-height: 1; color: var(--text);
+        }
+        .stat-sub { font-size: 11px; color: var(--text-faint); margin-top: 3px; }
+
+        /* ===== QUICK ACTIONS ===== */
+        .quick-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+            margin-bottom: 22px;
+        }
+        .quick-card {
+            background: linear-gradient(155deg, var(--surface), var(--bg-soft)) !important;
+            border: 1px solid var(--border) !important; border-radius: var(--radius);
+            padding: 22px !important; cursor: pointer; transition: all .2s;
+            display: flex; align-items: flex-start; gap: 16px;
+            color: var(--text) !important; text-align: left;
+            width: 100%; font-family: var(--font-body);
+            box-shadow: none !important;
+        }
+        .quick-card:hover {
+            border-color: var(--accent) !important; box-shadow: var(--shadow) !important;
+            transform: translateY(-3px);
+            background: linear-gradient(155deg, var(--surface-2), var(--bg-soft)) !important;
+        }
+        .quick-card:active { transform: translateY(-1px); }
+        .q-icon {
+            width: 46px; height: 46px; border-radius: 12px;
+            background: var(--accent-soft); border: 1px solid var(--accent-ring);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; flex-shrink: 0;
+        }
+        .q-title {
+            font-family: var(--font-display); font-size: 15px;
+            font-weight: 600; margin-bottom: 5px;
+        }
+        .q-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+
+        /* ===== RECENT GRID ===== */
+        .recent-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+        /* ===== LIST CARD ===== */
+        .list-card {
+            background: linear-gradient(180deg, var(--surface), var(--bg-soft));
+            border: 1px solid var(--border); border-radius: var(--radius);
+        }
+        .list-card-head {
+            padding: 13px 18px; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .list-card-title {
+            font-size: 12px; font-weight: 600; text-transform: uppercase;
+            letter-spacing: .06em; color: var(--text-muted);
+        }
+        .list-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 13px 18px; border-bottom: 1px solid var(--border-soft);
+            transition: background .12s; gap: 12px;
+        }
+        .list-item:last-child { border-bottom: none; }
+        .list-item:hover { background: var(--surface-2); }
+        .li-title { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+        .li-sub { font-size: 11px; color: var(--text-muted); }
+        .li-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+        /* ===== FORM PANEL (collapsible) ===== */
+        .form-panel {
+            background: linear-gradient(180deg, var(--surface), var(--bg-soft));
+            border: 1px solid var(--border); border-radius: var(--radius);
+            margin-bottom: 16px; overflow: hidden;
+        }
+        .form-panel-hdr {
+            padding: 15px 18px;
+            display: flex; justify-content: space-between; align-items: center;
+            cursor: pointer; border-bottom: 1px solid transparent; transition: all .15s;
+            user-select: none;
+        }
+        .form-panel-hdr.open { border-bottom-color: var(--border); }
+        .form-panel-hdr:hover { background: var(--surface-2); }
+        .form-panel-ttl {
+            font-family: var(--font-display); font-size: 14px;
+            font-weight: 600; display: flex; align-items: center; gap: 8px;
+        }
+        .form-toggle {
+            font-size: 12px; font-weight: 600; padding: 6px 13px;
+            border-radius: 7px; background: var(--accent);
+            color: #fff; box-shadow: 0 2px 8px -2px var(--accent-ring);
+            transition: all .15s;
+        }
+        .form-panel-body { padding: 20px; display: none; }
+        .form-panel-body.open { display: block; }
+
+        /* ===== TABS ===== */
+        .mgr-tab { display: none; }
+        .mgr-tab.active { display: block; }
+
+        /* ===== STATS TAB ===== */
+        .stat-form { margin-bottom: 16px; }
+
+        @media (max-width: 920px) {
+            .mgr-sidebar { width: 56px; }
+            .mgr-logo-text, .mgr-logo-sub, .nav-label, .nav-chip,
+            .mgr-uname, .mgr-urole, .mgr-logout-text { display: none; }
+            .mgr-main { margin-left: 56px; }
+            .stats-grid, .quick-grid, .recent-grid { grid-template-columns: 1fr; }
+            .mgr-content { padding: 18px 16px 40px; }
+        }
+    </style>
 </head>
 <body>
 
-<div class="topbar">
-    <h1>Панель менеджера</h1>
-    <div class="topbar-right">
-        <button class="secondary" onclick="location.href='dashboard.html'">← Назад</button>
-        <button class="secondary" onclick="logout()">Выйти</button>
-    </div>
-</div>
-
-<div class="container">
-
-    <div class="card">
-        <h2>Новый тест</h2>
-        <input type="text" id="testTitle" placeholder="Название теста">
-        <input type="text" id="testDescription" placeholder="Описание (необязательно)">
-        <div id="questions"></div>
-        <div class="btn-group">
-            <button class="secondary" onclick="addQuestion()">+ Вопрос</button>
-            <button onclick="createTest()">Сохранить тест</button>
+<!-- ============ SIDEBAR ============ -->
+<aside class="mgr-sidebar">
+    <div class="mgr-logo">
+        <div class="mgr-logo-mark">L</div>
+        <div>
+            <div class="mgr-logo-text">LMS</div>
+            <div class="mgr-logo-sub">Панель менеджера</div>
         </div>
-        <div id="testError" class="error-text"></div>
     </div>
 
-    <div class="card">
-        <h2>Тесты</h2>
-        <div id="testsList" class="empty-state">Загрузка…</div>
+    <nav class="mgr-nav">
+        <div class="mgr-nav-label">Навигация</div>
+
+        <button class="mgr-nav-btn active" data-tab="overview" onclick="showTab('overview')">
+            <span class="nav-ico">⊞</span>
+            <span class="nav-label">Обзор</span>
+        </button>
+        <button class="mgr-nav-btn" data-tab="tests" onclick="showTab('tests')">
+            <span class="nav-ico">📝</span>
+            <span class="nav-label">Тесты</span>
+            <span class="nav-chip" id="chip-tests">—</span>
+        </button>
+        <button class="mgr-nav-btn" data-tab="assignments" onclick="showTab('assignments')">
+            <span class="nav-ico">📋</span>
+            <span class="nav-label">Задания</span>
+            <span class="nav-chip" id="chip-assignments">—</span>
+        </button>
+        <button class="mgr-nav-btn" data-tab="stats" onclick="showTab('stats')">
+            <span class="nav-ico">📊</span>
+            <span class="nav-label">Аналитика</span>
+        </button>
+    </nav>
+
+    <div class="mgr-user">
+        <div class="mgr-user-row">
+            <div class="mgr-avatar" id="avatarLetter">М</div>
+            <div>
+                <div class="mgr-uname" id="sidebarName">Менеджер</div>
+                <div class="mgr-urole">Менеджер</div>
+            </div>
+        </div>
+        <button class="btn-logout" onclick="logout()">
+            <span>⎋</span>
+            <span class="mgr-logout-text">Выйти</span>
+        </button>
+    </div>
+</aside>
+
+<!-- ============ MAIN ============ -->
+<div class="mgr-main">
+    <div class="mgr-topbar">
+        <div class="mgr-topbar-left">
+            <button class="btn-back" onclick="location.href='dashboard.html'">← Назад</button>
+            <span class="mgr-page-title" id="pageTitle">Обзор</span>
+        </div>
     </div>
 
-    <div class="card">
-        <h2>Новое задание</h2>
-        <input type="text" id="assignTitle" placeholder="Название задания">
-        <input type="text" id="assignDescription" placeholder="Описание (необязательно)">
-        <select id="assignStudent"><option value="">Загрузка студентов…</option></select>
-        <select id="assignTest"><option value="">Без теста</option></select>
-        <input type="datetime-local" id="assignDeadline">
-        <button class="full" onclick="createAssignment()">Создать задание</button>
-        <div id="assignError" class="error-text"></div>
-    </div>
+    <div class="mgr-content">
 
-    <div class="card">
-        <h2>Задания</h2>
-        <div id="assignmentsList" class="empty-state">Загрузка…</div>
-    </div>
+        <!-- ===== TAB: OVERVIEW ===== -->
+        <div id="tab-overview" class="mgr-tab active">
 
-    <div class="card">
-        <h2>Результаты теста</h2>
-        <select id="statsTest" onchange="loadStatistics()"><option value="">Выберите тест</option></select>
-        <div id="statsResult"></div>
-    </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-ico">📝</div>
+                    <div class="stat-lbl">Тестов создано</div>
+                    <div class="stat-val" id="stat-tests">—</div>
+                    <div class="stat-sub">всего в системе</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-ico">📋</div>
+                    <div class="stat-lbl">Заданий выдано</div>
+                    <div class="stat-val" id="stat-assignments">—</div>
+                    <div class="stat-sub">активных и завершённых</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-ico">🎓</div>
+                    <div class="stat-lbl">Студентов</div>
+                    <div class="stat-val" id="stat-students">—</div>
+                    <div class="stat-sub">зарегистрировано</div>
+                </div>
+            </div>
 
+            <div class="quick-grid">
+                <button class="quick-card" onclick="showTab('tests'); openForm('testForm')">
+                    <div class="q-icon">📝</div>
+                    <div>
+                        <div class="q-title">Создать тест</div>
+                        <div class="q-desc">Добавьте новый тест с вопросами и вариантами ответов для студентов</div>
+                    </div>
+                </button>
+                <button class="quick-card" onclick="showTab('assignments'); openForm('assignForm')">
+                    <div class="q-icon">📋</div>
+                    <div>
+                        <div class="q-title">Выдать задание</div>
+                        <div class="q-desc">Назначьте задание студенту с дедлайном и прикреплённым тестом</div>
+                    </div>
+                </button>
+            </div>
+
+            <div class="recent-grid">
+                <div class="list-card">
+                    <div class="list-card-head">
+                        <span class="list-card-title">Последние тесты</span>
+                        <button class="secondary" style="font-size:12px;padding:5px 10px" onclick="showTab('tests')">Все →</button>
+                    </div>
+                    <div id="recentTests"><div class="empty-state" style="padding:20px;font-size:13px">Загрузка…</div></div>
+                </div>
+                <div class="list-card">
+                    <div class="list-card-head">
+                        <span class="list-card-title">Последние задания</span>
+                        <button class="secondary" style="font-size:12px;padding:5px 10px" onclick="showTab('assignments')">Все →</button>
+                    </div>
+                    <div id="recentAssignments"><div class="empty-state" style="padding:20px;font-size:13px">Загрузка…</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TAB: TESTS ===== -->
+        <div id="tab-tests" class="mgr-tab">
+            <div class="form-panel">
+                <div class="form-panel-hdr" id="testFormHdr" onclick="toggleForm('testForm')">
+                    <span class="form-panel-ttl">📝 Создать новый тест</span>
+                    <span class="form-toggle" id="testFormToggle">+ Открыть форму</span>
+                </div>
+                <div class="form-panel-body" id="testForm">
+                    <input type="text" id="testTitle" placeholder="Название теста">
+                    <input type="text" id="testDescription" placeholder="Описание (необязательно)">
+                    <div id="questions"></div>
+                    <div class="btn-group" style="margin-top:8px">
+                        <button class="secondary" onclick="addQuestion()">+ Добавить вопрос</button>
+                        <button onclick="createTest()">Сохранить тест</button>
+                    </div>
+                    <div id="testError" class="error-text"></div>
+                </div>
+            </div>
+
+            <div class="list-card">
+                <div class="list-card-head">
+                    <span class="list-card-title">Все тесты</span>
+                </div>
+                <div id="testsList"><div class="empty-state" style="padding:24px">Загрузка…</div></div>
+            </div>
+        </div>
+
+        <!-- ===== TAB: ASSIGNMENTS ===== -->
+        <div id="tab-assignments" class="mgr-tab">
+            <div class="form-panel">
+                <div class="form-panel-hdr" id="assignFormHdr" onclick="toggleForm('assignForm')">
+                    <span class="form-panel-ttl">📋 Создать задание</span>
+                    <span class="form-toggle" id="assignFormToggle">+ Открыть форму</span>
+                </div>
+                <div class="form-panel-body" id="assignForm">
+                    <input type="text" id="assignTitle" placeholder="Название задания">
+                    <input type="text" id="assignDescription" placeholder="Описание (необязательно)">
+                    <select id="assignGroup"><option value="">Загрузка групп…</option></select>
+                    <select id="assignTest"><option value="">Без теста</option></select>
+                    <input type="datetime-local" id="assignDeadline">
+                    <button class="full" onclick="createAssignment()">Создать задание</button>
+                    <div id="assignError" class="error-text"></div>
+                </div>
+            </div>
+
+            <div class="list-card">
+                <div class="list-card-head">
+                    <span class="list-card-title">Все задания</span>
+                </div>
+                <div id="assignmentsList"><div class="empty-state" style="padding:24px">Загрузка…</div></div>
+            </div>
+        </div>
+
+        <!-- ===== TAB: STATISTICS ===== -->
+        <div id="tab-stats" class="mgr-tab">
+            <div class="card">
+                <h2>Аналитика по тестам</h2>
+                <select id="statsTest" onchange="loadStatistics()" class="stat-form">
+                    <option value="">Выберите тест для просмотра</option>
+                </select>
+                <div id="statsResult"></div>
+            </div>
+        </div>
+
+    </div>
 </div>
 
 <script src="api.js"></script>
 <script>
     requireAuth("MANAGER");
 
+    // User info in sidebar
+    const _n = getFullName();
+    const _dn = (_n && _n !== 'undefined' && _n !== 'null') ? _n : '';
+    if (_dn) {
+        document.getElementById('sidebarName').textContent = _dn;
+        document.getElementById('avatarLetter').textContent = _dn.charAt(0).toUpperCase();
+    }
+
+    // ===== TABS =====
+    const TAB_LABELS = { overview: 'Обзор', tests: 'Тесты', assignments: 'Задания', stats: 'Аналитика' };
+
+    function showTab(name) {
+        document.querySelectorAll('.mgr-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.mgr-nav-btn[data-tab]').forEach(b => b.classList.remove('active'));
+        document.getElementById('tab-' + name).classList.add('active');
+        const btn = document.querySelector(`.mgr-nav-btn[data-tab="${name}"]`);
+        if (btn) btn.classList.add('active');
+        document.getElementById('pageTitle').textContent = TAB_LABELS[name] || name;
+    }
+
+    // ===== COLLAPSIBLE FORMS =====
+    function toggleForm(id) {
+        const body = document.getElementById(id);
+        const hdr  = document.getElementById(id + 'Hdr');
+        const tog  = document.getElementById(id + 'Toggle');
+        const open = body.classList.toggle('open');
+        if (hdr) hdr.classList.toggle('open', open);
+        if (tog) tog.textContent = open ? '✕ Закрыть' : '+ Открыть форму';
+    }
+
+    function openForm(id) {
+        const body = document.getElementById(id);
+        if (!body.classList.contains('open')) toggleForm(id);
+    }
+
+    // ===== QUESTIONS =====
     let questionCount = 0;
 
     addQuestion();
-    loadTests();
-    loadAssignments();
-    loadFormOptions();
-
-    // ===== СОЗДАНИЕ ТЕСТА =====
 
     function addQuestion() {
         questionCount++;
-        const index = questionCount;
-
-        const div = document.createElement("div");
-        div.className = "question-block";
-        div.id = `question_${index}`;
+        const i = questionCount;
+        const div = document.createElement('div');
+        div.className = 'question-block';
+        div.id = `question_${i}`;
         div.innerHTML = `
-        <div class="row" style="border-bottom:none; padding-top:0;">
-            <b>Вопрос ${index}</b>
-            <button class="danger" onclick="removeQuestion(${index})">Удалить</button>
+        <div class="row" style="border-bottom:none;padding-top:0">
+            <b>Вопрос ${i}</b>
+            <button class="danger" onclick="removeQuestion(${i})">Удалить</button>
         </div>
         <input type="text" placeholder="Текст вопроса" class="q-text">
-        ${["A","B","C","D"].map(label => `
+        ${['A','B','C','D'].map(l => `
             <label class="answer-row">
-                <input type="radio" name="correct_${index}" value="${label}">
-                <span>${label}</span>
-                <input type="text" placeholder="Вариант ${label}" class="a-text" data-label="${label}">
-            </label>`).join("")}
-    `;
-
-        document.getElementById("questions").appendChild(div);
+                <input type="radio" name="correct_${i}" value="${l}">
+                <span>${l}</span>
+                <input type="text" placeholder="Вариант ${l}" class="a-text" data-label="${l}">
+            </label>`).join('')}`;
+        document.getElementById('questions').appendChild(div);
     }
 
-    function removeQuestion(index) {
-        document.getElementById(`question_${index}`)?.remove();
-    }
+    function removeQuestion(i) { document.getElementById(`question_${i}`)?.remove(); }
 
+    // ===== CREATE TEST =====
     async function createTest() {
-        const title = document.getElementById("testTitle").value.trim();
-        const description = document.getElementById("testDescription").value.trim();
-        const errorEl = document.getElementById("testError");
-        errorEl.textContent = "";
+        const title = document.getElementById('testTitle').value.trim();
+        const description = document.getElementById('testDescription').value.trim();
+        const errorEl = document.getElementById('testError');
+        errorEl.textContent = '';
 
-        if (!title) { errorEl.textContent = "Введите название теста"; return; }
+        if (!title) { errorEl.textContent = 'Введите название теста'; return; }
 
-        const blocks = document.querySelectorAll(".question-block");
-        if (blocks.length === 0) { errorEl.textContent = "Добавьте хотя бы один вопрос"; return; }
+        const blocks = document.querySelectorAll('.question-block');
+        if (!blocks.length) { errorEl.textContent = 'Добавьте хотя бы один вопрос'; return; }
 
         const questions = [];
-        let orderIndex = 1;
-
+        let order = 1;
         for (const block of blocks) {
-            const qIndex = block.id.split("_")[1];
-            const questionText = block.querySelector(".q-text").value.trim();
-            if (!questionText) { errorEl.textContent = "Заполните текст всех вопросов"; return; }
+            const qi = block.id.split('_')[1];
+            const questionText = block.querySelector('.q-text').value.trim();
+            if (!questionText) { errorEl.textContent = 'Заполните текст всех вопросов'; return; }
 
-            const correctRadio = block.querySelector(`input[name="correct_${qIndex}"]:checked`);
-            if (!correctRadio) { errorEl.textContent = `Выберите правильный ответ для вопроса ${qIndex}`; return; }
-            const correctLabel = correctRadio.value;
+            const radio = block.querySelector(`input[name="correct_${qi}"]:checked`);
+            if (!radio) { errorEl.textContent = `Выберите правильный ответ для вопроса ${qi}`; return; }
+            const correctLabel = radio.value;
 
             const answers = [];
-            for (const input of block.querySelectorAll(".a-text")) {
-                const text = input.value.trim();
-                if (!text) { errorEl.textContent = "Заполните все варианты ответа"; return; }
-                answers.push({ label: input.dataset.label, answerText: text, correct: input.dataset.label === correctLabel });
+            for (const inp of block.querySelectorAll('.a-text')) {
+                const text = inp.value.trim();
+                if (!text) { errorEl.textContent = 'Заполните все варианты ответа'; return; }
+                answers.push({ label: inp.dataset.label, answerText: text, correct: inp.dataset.label === correctLabel });
             }
-
-            questions.push({ questionText, orderIndex: orderIndex++, answers });
+            questions.push({ questionText, orderIndex: order++, answers });
         }
 
-        const result = await apiPost("/tests", { title, description, questions });
-        if (!result.ok) { errorEl.textContent = "Ошибка: " + result.text; return; }
+        const res = await apiPost('/tests', { title, description, questions });
+        if (!res.ok) { errorEl.textContent = 'Ошибка: ' + res.text; return; }
 
-        document.getElementById("testTitle").value = "";
-        document.getElementById("testDescription").value = "";
-        document.getElementById("questions").innerHTML = "";
+        document.getElementById('testTitle').value = '';
+        document.getElementById('testDescription').value = '';
+        document.getElementById('questions').innerHTML = '';
         questionCount = 0;
         addQuestion();
+        toggleForm('testForm');
 
         loadTests();
         loadFormOptions();
     }
 
-    // ===== СПИСОК ТЕСТОВ =====
-
+    // ===== LOAD TESTS =====
     async function loadTests() {
         try {
-            const tests = await apiGet("/tests");
-            const box = document.getElementById("testsList");
+            const tests = await apiGet('/tests');
+            document.getElementById('chip-tests').textContent = tests.length;
+            document.getElementById('stat-tests').textContent = tests.length;
 
-            if (tests.length === 0) { box.className = "empty-state"; box.textContent = "Тестов пока нет"; return; }
+            // Full list
+            const box = document.getElementById('testsList');
+            box.innerHTML = tests.length
+                ? tests.map(t => `
+                    <div class="list-item">
+                        <div>
+                            <div class="li-title">${escapeHtml(t.title)}</div>
+                            <div class="li-sub">${escapeHtml(t.description || 'Без описания')}</div>
+                        </div>
+                        <div class="li-actions">
+                            <button class="danger" onclick="deleteTest(${t.id})">Удалить</button>
+                        </div>
+                    </div>`).join('')
+                : '<div class="empty-state" style="padding:28px">Тестов пока нет — создайте первый!</div>';
 
-            box.className = "";
-            box.innerHTML = tests.map(t => `
-            <div class="row">
-                <div>
-                    <div><b>${escapeHtml(t.title)}</b></div>
-                    <div class="muted">${escapeHtml(t.description || "Без описания")}</div>
-                </div>
-                <button class="danger" onclick="deleteTest(${t.id})">Удалить</button>
-            </div>`).join("");
+            // Recent 3 for overview
+            const recent = tests.slice(-3).reverse();
+            document.getElementById('recentTests').innerHTML = recent.length
+                ? recent.map(t => `
+                    <div class="list-item">
+                        <div>
+                            <div class="li-title">${escapeHtml(t.title)}</div>
+                            <div class="li-sub">${escapeHtml(t.description || 'Без описания')}</div>
+                        </div>
+                        <span class="badge pending">Тест</span>
+                    </div>`).join('')
+                : '<div class="empty-state" style="padding:20px;font-size:13px">Нет тестов</div>';
         } catch (err) {
-            document.getElementById("testsList").textContent = "Ошибка: " + err.message;
+            document.getElementById('testsList').innerHTML = `<div class="empty-state" style="padding:24px">Ошибка: ${err.message}</div>`;
         }
     }
 
     async function deleteTest(id) {
-        if (!confirm("Удалить тест? Связанные задания тоже будут затронуты.")) return;
-        const result = await apiDelete(`/tests/${id}`);
-        if (!result.ok) { alert("Не удалось удалить тест"); return; }
+        if (!confirm('Удалить тест?')) return;
+        const res = await apiDelete(`/tests/${id}`);
+        if (!res.ok) { alert('Не удалось удалить тест'); return; }
         loadTests();
         loadFormOptions();
     }
 
-    // ===== ОПЦИИ ДЛЯ ФОРМ =====
-
+    // ===== FORM OPTIONS =====
     async function loadFormOptions() {
-        // Загружаем студентов и тесты независимо — ошибка одного не блокирует другого
         try {
-            const students = await apiGet("/users/students");
-            document.getElementById("assignStudent").innerHTML = students.length
-                ? students.map(s => `<option value="${s.id}">${escapeHtml(s.fullName)} (${escapeHtml(s.email)})</option>`).join("")
-                : `<option value="">Нет студентов — создайте их в панели администратора</option>`;
-        } catch (err) {
-            document.getElementById("assignStudent").innerHTML = `<option value="">Ошибка загрузки: ${err.message}</option>`;
-        }
+            const groups = await apiGet("/users/groups");
+            document.getElementById("assignGroup").innerHTML = groups.length
+                ? groups.map(g => `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join("")
+                : `<option value="">Нет групп</option>`;
 
-        try {
             const tests = await apiGet("/tests");
             const testOptions = tests.map(t => `<option value="${t.id}">${escapeHtml(t.title)}</option>`).join("");
+
             document.getElementById("assignTest").innerHTML = `<option value="">Без теста</option>` + testOptions;
             document.getElementById("statsTest").innerHTML = `<option value="">Выберите тест</option>` + testOptions;
+
+            const deadline = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+            deadline.setMinutes(deadline.getMinutes() - deadline.getTimezoneOffset());
+            document.getElementById("assignDeadline").value = deadline.toISOString().slice(0, 16);
         } catch (err) {
-            document.getElementById("assignTest").innerHTML = `<option value="">Ошибка загрузки тестов: ${err.message}</option>`;
+            console.error(err);
         }
-
-        const deadline = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-        deadline.setMinutes(deadline.getMinutes() - deadline.getTimezoneOffset());
-        document.getElementById("assignDeadline").value = deadline.toISOString().slice(0, 16);
     }
-
-    // ===== СОЗДАНИЕ ЗАДАНИЯ =====
 
     async function createAssignment() {
         const title = document.getElementById("assignTitle").value.trim();
         const description = document.getElementById("assignDescription").value.trim();
-        const studentId = document.getElementById("assignStudent").value;
+        const targetGroup = document.getElementById("assignGroup").value;
         const testId = document.getElementById("assignTest").value;
         const deadline = document.getElementById("assignDeadline").value;
         const errorEl = document.getElementById("assignError");
         errorEl.textContent = "";
 
-        if (!title || !studentId || !deadline) { errorEl.textContent = "Заполните название, студента и срок"; return; }
+        if (!title || !targetGroup || !deadline) { errorEl.textContent = "Заполните название, выберите группу и срок"; return; }
 
         const result = await apiPost("/assignments", {
-            title, description,
-            studentId: Number(studentId),
+            title, description, targetGroup,
             testId: testId ? Number(testId) : null,
             deadline: deadline + ":00"
         });
@@ -230,71 +660,90 @@
         loadAssignments();
     }
 
-    // ===== СПИСОК ЗАДАНИЙ =====
-
+    // ===== LOAD ASSIGNMENTS =====
     async function loadAssignments() {
         try {
-            const assignments = await apiGet("/assignments");
-            const box = document.getElementById("assignmentsList");
+            const list = await apiGet('/assignments');
+            document.getElementById('chip-assignments').textContent = list.length;
+            document.getElementById('stat-assignments').textContent = list.length;
 
-            if (assignments.length === 0) { box.className = "empty-state"; box.textContent = "Заданий пока нет"; return; }
+            const box = document.getElementById('assignmentsList');
+            box.innerHTML = list.length
+                ? list.map(a => `
+                    <div class="list-item">
+                        <div>
+                            <div class="li-title">${escapeHtml(a.title)}
+                                <span class="muted" style="font-weight:400"> → ${escapeHtml(a.studentName)}</span>
+                            </div>
+                            <div class="li-sub">${escapeHtml(a.testTitle || 'без теста')} · до ${formatDate(a.deadline)}</div>
+                        </div>
+                        <div class="li-actions">
+                            <span class="badge ${a.status === 'COMPLETED' ? 'success' : 'pending'}">
+                                ${a.status === 'COMPLETED' ? 'Выполнено' : 'В процессе'}
+                            </span>
+                            <button class="danger" onclick="deleteAssignment(${a.id})">Удалить</button>
+                        </div>
+                    </div>`).join('')
+                : '<div class="empty-state" style="padding:28px">Заданий пока нет — создайте первое!</div>';
 
-            box.className = "";
-            box.innerHTML = assignments.map(a => `
-            <div class="row">
-                <div>
-                    <div><b>${escapeHtml(a.title)}</b> → ${escapeHtml(a.studentName)}</div>
-                    <div class="muted">${escapeHtml(a.testTitle || "без теста")} · до ${formatDate(a.deadline)}</div>
-                </div>
-                <div>
-                    <span class="badge ${a.status === "COMPLETED" ? "success" : "pending"}">
-                        ${a.status === "COMPLETED" ? "Выполнено" : "В процессе"}
-                    </span>
-                    <button class="danger" onclick="deleteAssignment(${a.id})">Удалить</button>
-                </div>
-            </div>`).join("");
+            const recent = list.slice(-3).reverse();
+            document.getElementById('recentAssignments').innerHTML = recent.length
+                ? recent.map(a => `
+                    <div class="list-item">
+                        <div>
+                            <div class="li-title">${escapeHtml(a.title)}</div>
+                            <div class="li-sub">→ ${escapeHtml(a.studentName)} · ${formatDate(a.deadline)}</div>
+                        </div>
+                        <span class="badge ${a.status === 'COMPLETED' ? 'success' : 'pending'}">
+                            ${a.status === 'COMPLETED' ? 'Выполнено' : 'В процессе'}
+                        </span>
+                    </div>`).join('')
+                : '<div class="empty-state" style="padding:20px;font-size:13px">Нет заданий</div>';
         } catch (err) {
-            document.getElementById("assignmentsList").textContent = "Ошибка: " + err.message;
+            document.getElementById('assignmentsList').innerHTML = `<div class="empty-state" style="padding:24px">Ошибка: ${err.message}</div>`;
         }
     }
 
     async function deleteAssignment(id) {
-        if (!confirm("Удалить задание?")) return;
-        const result = await apiDelete(`/assignments/${id}`);
-        if (!result.ok) { alert("Не удалось удалить задание"); return; }
+        if (!confirm('Удалить задание?')) return;
+        const res = await apiDelete(`/assignments/${id}`);
+        if (!res.ok) { alert('Не удалось удалить задание'); return; }
         loadAssignments();
     }
 
-    // ===== СТАТИСТИКА =====
-
+    // ===== STATISTICS =====
     async function loadStatistics() {
-        const testId = document.getElementById("statsTest").value;
-        const box = document.getElementById("statsResult");
-
-        if (!testId) { box.innerHTML = ""; return; }
+        const testId = document.getElementById('statsTest').value;
+        const box = document.getElementById('statsResult');
+        if (!testId) { box.innerHTML = ''; return; }
 
         try {
             const results = await apiGet(`/statistics/test/${testId}`);
-
-            if (results.length === 0) { box.innerHTML = `<p class="empty-state">Пока никто не сдавал этот тест</p>`; return; }
-
+            if (!results.length) {
+                box.innerHTML = '<p class="empty-state">Пока никто не сдавал этот тест</p>';
+                return;
+            }
             box.innerHTML = `
             <table>
                 <thead><tr><th>Студент</th><th>Балл</th><th>Неправильных</th><th>Дата</th></tr></thead>
                 <tbody>
-                    ${results.map(r => `
-                        <tr>
-                            <td>${escapeHtml(r.studentName)}</td>
-                            <td>${r.score} / ${r.totalPoints}</td>
-                            <td>${r.incorrectCount}</td>
-                            <td>${formatDate(r.completedAt)}</td>
-                        </tr>`).join("")}
+                    ${results.map(r => `<tr>
+                        <td>${escapeHtml(r.studentName)}</td>
+                        <td>${r.score} / ${r.totalPoints}</td>
+                        <td>${r.incorrectCount}</td>
+                        <td>${formatDate(r.completedAt)}</td>
+                    </tr>`).join('')}
                 </tbody>
             </table>`;
         } catch (err) {
-            box.textContent = "Ошибка: " + err.message;
+            box.textContent = 'Ошибка: ' + err.message;
         }
     }
+
+    // ===== INIT =====
+    loadTests();
+    loadAssignments();
+    loadFormOptions();
 </script>
 </body>
 </html>

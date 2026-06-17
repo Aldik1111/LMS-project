@@ -105,12 +105,15 @@ public class TestService {
         Test test = testRepository.findByIdWithQuestions(request.getTestId())
                 .orElseThrow(() -> new RuntimeException("Test not found"));
 
-        User student = userRepository.findById(studentId)
+        User studentUser = userRepository.findById(studentId)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
+        if (!(studentUser instanceof Student student)) {
+            throw new RuntimeException("Only student can complete tests");
+        }
 
         // Проверка дедлайна
-        List<Assignment> studentAssignments = assignmentRepository.findAllByStudentId(studentId);
+        List<Assignment> studentAssignments = assignmentRepository.findAllByTargetGroup(student.getGroupNumber());
         Assignment relatedAssignment = studentAssignments.stream()
                 .filter(a -> a.getTest() != null && a.getTest().getId().equals(request.getTestId()))
                 .findFirst()
@@ -118,7 +121,7 @@ public class TestService {
         if (relatedAssignment != null
             && relatedAssignment.getDeadline() != null
             && relatedAssignment.getDeadline().isBefore(java.time.LocalDateTime.now())) {
-            throw new RuntimeException("Deadline time is out!: " + relatedAssignment.getDeadline());
+            throw new RuntimeException("Deadline time is out: " + relatedAssignment.getDeadline());
         }
 
         // Догружаем ответы отдельным запросом
@@ -129,7 +132,7 @@ public class TestService {
 
         // Create result of test
         TestResult result = TestResult.builder()
-                .student(student)
+                .student(studentUser)
                 .test(test)
                 .score(0)
                 .totalPoints(test.getQuestions().size())
@@ -187,7 +190,7 @@ public class TestService {
         return new TestResultDto(
                 savedResult.getId(),
                 test.getTitle(),
-                student.getFullName(),
+                studentUser.getFullName(),
                 correctCount,
                 test.getQuestions().size(),
                 test.getQuestions().size() - correctCount,

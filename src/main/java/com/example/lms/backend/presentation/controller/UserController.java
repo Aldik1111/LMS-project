@@ -27,6 +27,11 @@ public class UserController {
         return ResponseEntity.ok(userService.getAllStudents());
     }
 
+    @GetMapping("/groups")
+    public ResponseEntity<List<String>> getAllGroups() {
+        return ResponseEntity.ok(userService.getAllGroups());
+    }
+
     @GetMapping("/{id:\\d+}")
     public ResponseEntity<UserDto> getUserById(@PathVariable Long id) {
         try {

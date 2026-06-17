@@ -24,9 +24,9 @@ public class AssignmentController {
     public ResponseEntity<List<AssignmentDto>> getAssignments() {
         User currentUser = securityUtils.getCurrentUser();
 
-        if (currentUser instanceof Student) {
+        if (currentUser instanceof Student student) {
             return ResponseEntity.ok(
-                    assignmentService.getAssignmentsForStudents(currentUser.getId())
+                    assignmentService.getAssignmentsForGroup(student.getGroupNumber())
             );
         }
 
@@ -45,6 +45,16 @@ public class AssignmentController {
         }
     }
 
+    // PUT /api/assignments/{id}/complete
+    @PutMapping("/{id}/complete")
+    public ResponseEntity<AssignmentDto> completeAssignment(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(assignmentService.completeAssignment(id));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     // DELETE /api/assignments/{id}
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteAssignment(@PathVariable Long id) {
@@ -56,13 +66,4 @@ public class AssignmentController {
         }
     }
 
-    // PUT /api/assignments/{id}/complete
-    @PutMapping("/{id}/complete")
-    public ResponseEntity<AssignmentDto> completeAssignment(@PathVariable Long id) {
-        try {
-            return ResponseEntity.ok(assignmentService.completeAssignment(id));
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
 }

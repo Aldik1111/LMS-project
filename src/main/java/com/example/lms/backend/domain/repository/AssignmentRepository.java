@@ -9,7 +9,6 @@ import java.util.List;
 
 @Repository
 public interface AssignmentRepository extends JpaRepository<Assignment,Long> {
-    List<Assignment> findAllByStudentId (Long studentId);
+    List<Assignment> findAllByTargetGroup(String targetGroup);
 
-    List<Assignment> findAllByStudentIdAndStatus (Long studentId, AssignmentStatus assignmentStatus);
 }

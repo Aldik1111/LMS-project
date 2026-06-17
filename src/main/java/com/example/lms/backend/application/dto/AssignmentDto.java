@@ -16,8 +16,7 @@ public class AssignmentDto {
     private Long id;
     private String title;
     private String description;
-    private Long studentId;
-    private String StudentName;
+    private String targetGroup;
     private Long testId;
     private String TestTitle;
     private AssignmentStatus status;

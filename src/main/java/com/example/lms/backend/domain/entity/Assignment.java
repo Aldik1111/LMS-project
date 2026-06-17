@@ -21,9 +21,9 @@ public class Assignment {
 
     private String description;
 
-    @ManyToOne(fetch = FetchType.LAZY) // for who assignment
-    @JoinColumn(name = "student_id")
-    private User student;
+    @Column(name = "target_group", nullable = false)
+    private String targetGroup;
+
 
     @ManyToOne(fetch = FetchType.LAZY) // which test should
     @JoinColumn(name = "test_id")

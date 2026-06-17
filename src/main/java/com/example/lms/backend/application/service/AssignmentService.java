@@ -33,8 +33,8 @@ public class AssignmentService {
     }
 
     @Transactional(readOnly = true)
-    public List<AssignmentDto> getAssignmentsForStudents(Long studentId){ // For students
-        return assignmentRepository.findAllByStudentId(studentId)
+    public List<AssignmentDto> getAssignmentsForGroup(String group){ // For students
+        return assignmentRepository.findAllByTargetGroup(group)
                 .stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
@@ -42,11 +42,12 @@ public class AssignmentService {
 
     @Transactional
     public AssignmentDto createAssignment(AssignmentDto dto, Long creatorId) {
-        User student = userRepository.findById(dto.getStudentId())
-                .orElseThrow(() -> new RuntimeException("Student not found"));
-
         User creator = userRepository.findById(creatorId)
                 .orElseThrow(() -> new RuntimeException("Creator not found"));
+
+        if (dto.getTargetGroup() == null || dto.getTargetGroup().isBlank()) {
+            throw new RuntimeException("Target group is required");
+        }
 
         Test test = null;
         if (dto.getTestId() != null) {
@@ -57,7 +58,7 @@ public class AssignmentService {
         Assignment assignment = Assignment.builder()
                 .title(dto.getTitle())
                 .description(dto.getDescription())
-                .student(student)
+                .targetGroup(dto.getTargetGroup())
                 .test(test)
                 .assignedBy(creator)
                 .deadline(dto.getDeadline())
@@ -68,7 +69,6 @@ public class AssignmentService {
         return toDto(saved);
     }
 
-    @Transactional
     public AssignmentDto completeAssignment(Long assignmentId){
         Assignment assignment = assignmentRepository.findById(assignmentId)
                 .orElseThrow(() -> new RuntimeException("Assignment not found"));
@@ -90,8 +90,7 @@ public class AssignmentService {
                 a.getId(),
                 a.getTitle(),
                 a.getDescription(),
-                a.getStudent() != null ? a.getStudent().getId() : null,
-                a.getStudent() != null ? a.getStudent().getFullName() : "-",
+                a.getTargetGroup(),
                 a.getTest() != null ? a.getTest().getId() : null,
                 a.getTest() != null ? a.getTest().getTitle() : "-",
                 a.getStatus(),
