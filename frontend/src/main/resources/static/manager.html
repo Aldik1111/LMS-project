@@ -397,10 +397,20 @@
                 <div class="form-panel-body" id="testForm">
                     <input type="text" id="testTitle" placeholder="Название теста">
                     <input type="text" id="testDescription" placeholder="Описание (необязательно)">
+
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 8px">
+                        <span style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em">
+                            Вопросы · <span id="qCount">0</span>
+                        </span>
+                        <button class="secondary" style="font-size:13px;padding:6px 13px;display:flex;align-items:center;gap:6px" onclick="addQuestion()">
+                            ＋ Добавить вопрос
+                        </button>
+                    </div>
+
                     <div id="questions"></div>
-                    <div class="btn-group" style="margin-top:8px">
-                        <button class="secondary" onclick="addQuestion()">+ Добавить вопрос</button>
-                        <button onclick="createTest()">Сохранить тест</button>
+
+                    <div style="margin-top:12px">
+                        <button class="full" onclick="createTest()">Сохранить тест</button>
                     </div>
                     <div id="testError" class="error-text"></div>
                 </div>
@@ -498,6 +508,11 @@
 
     addQuestion();
 
+    function updateQCount() {
+        document.getElementById('qCount').textContent =
+            document.querySelectorAll('.question-block').length;
+    }
+
     function addQuestion() {
         questionCount++;
         const i = questionCount;
@@ -505,21 +520,25 @@
         div.className = 'question-block';
         div.id = `question_${i}`;
         div.innerHTML = `
-        <div class="row" style="border-bottom:none;padding-top:0">
-            <b>Вопрос ${i}</b>
-            <button class="danger" onclick="removeQuestion(${i})">Удалить</button>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <span style="font-size:13px;font-weight:600;color:var(--accent)">Вопрос ${i}</span>
+            <button class="danger" style="padding:4px 11px;font-size:12px" onclick="removeQuestion(${i})">✕ Удалить</button>
         </div>
         <input type="text" placeholder="Текст вопроса" class="q-text">
         ${['A','B','C','D'].map(l => `
             <label class="answer-row">
                 <input type="radio" name="correct_${i}" value="${l}">
-                <span>${l}</span>
+                <span style="font-weight:600;min-width:16px">${l}</span>
                 <input type="text" placeholder="Вариант ${l}" class="a-text" data-label="${l}">
             </label>`).join('')}`;
         document.getElementById('questions').appendChild(div);
+        updateQCount();
     }
 
-    function removeQuestion(i) { document.getElementById(`question_${i}`)?.remove(); }
+    function removeQuestion(i) {
+        const el = document.getElementById(`question_${i}`);
+        if (el) { el.remove(); updateQCount(); }
+    }
 
     // ===== CREATE TEST =====
     async function createTest() {
@@ -561,6 +580,7 @@
         document.getElementById('questions').innerHTML = '';
         questionCount = 0;
         addQuestion();
+        updateQCount();
         toggleForm('testForm');
 
         loadTests();

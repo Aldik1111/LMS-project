@@ -2,20 +2,467 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LMS</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* ===== Student TrustExam-style layout ===== */
+        #studentLayout {
+            display: none;
+            height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+            background: #f0f2f5;
+            overflow: hidden;
+        }
+        #studentLayout.visible { display: flex; }
+
+        /* -- Sidebar -- */
+        .st-sidebar {
+            width: 240px;
+            min-width: 240px;
+            background: #fff;
+            border-right: 1px solid #e5e7eb;
+            display: flex;
+            flex-direction: column;
+        }
+        .st-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 22px 20px 20px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .st-logo-mark {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 800;
+            font-size: 18px;
+            letter-spacing: -1px;
+            flex-shrink: 0;
+        }
+        .st-logo-text {
+            font-weight: 700;
+            font-size: 17px;
+            color: #1c1c2e;
+        }
+        .st-nav {
+            flex: 1;
+            padding: 16px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .st-nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border: none;
+            background: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #6b7280;
+            width: 100%;
+            text-align: left;
+            transition: background 0.15s, color 0.15s;
+        }
+        .st-nav-btn:hover { background: #f5f3ff; color: #5b4fcf; }
+        .st-nav-btn.active { background: #ede9ff; color: #5b4fcf; font-weight: 600; }
+        .st-sidebar-footer {
+            padding: 16px;
+            border-top: 1px solid #f3f4f6;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .st-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: #fff;
+            font-weight: 700;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .st-footer-info { flex: 1; min-width: 0; }
+        .st-footer-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1c1c2e;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .st-footer-role { font-size: 11px; color: #9ca3af; margin-top: 1px; }
+        .st-logout-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px 8px;
+            color: #9ca3af;
+            font-size: 13px;
+            border-radius: 6px;
+            transition: all 0.15s;
+        }
+        .st-logout-btn:hover { color: #ef4444; background: #fef2f2; }
+
+        /* -- Main -- */
+        .st-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .st-header {
+            background: #fff;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 14px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+        .st-header-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #1c1c2e;
+        }
+        .st-filter-tabs {
+            display: flex;
+            gap: 4px;
+            background: #f3f4f6;
+            border-radius: 8px;
+            padding: 3px;
+        }
+        .st-ftab {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            background: none;
+            color: #6b7280;
+            transition: all 0.15s;
+        }
+        .st-ftab.active { background: #fff; color: #1c1c2e; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .st-ftab:not(.active):hover { color: #374151; }
+
+        .st-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 28px;
+        }
+
+        /* -- Assignment list -- */
+        .st-list {
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            overflow: hidden;
+        }
+        .st-list-row {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #f3f4f6;
+            gap: 14px;
+            transition: background 0.1s;
+        }
+        .st-list-row:last-child { border-bottom: none; }
+        .st-list-row:hover { background: #fafafa; }
+        .st-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .st-dot.pending { background: #f59e0b; }
+        .st-dot.completed { background: #10b981; }
+        .st-row-body { flex: 1; min-width: 0; }
+        .st-row-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1c1c2e;
+            margin-bottom: 3px;
+        }
+        .st-row-sub {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+        .st-row-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+        .st-score {
+            font-size: 13px;
+            font-weight: 700;
+            color: #6366f1;
+        }
+        .st-badge-done {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .st-action-btn {
+            padding: 7px 16px;
+            background: #6366f1;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: background 0.15s;
+        }
+        .st-action-btn:hover { background: #4f46e5; }
+        .st-action-btn.plain {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        .st-action-btn.plain:hover { background: #e5e7eb; }
+
+        /* -- Empty state -- */
+        .st-empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9ca3af;
+        }
+        .st-empty-icon { font-size: 42px; margin-bottom: 12px; }
+        .st-empty h3 { margin: 0 0 6px; color: #6b7280; font-size: 15px; font-weight: 600; }
+        .st-empty p { margin: 0; font-size: 13px; }
+
+        /* -- Test overlay -- */
+        #testOverlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 300;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        #testOverlay.open { display: flex; }
+        .st-test-card {
+            background: #fff;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 680px;
+            max-height: 88vh;
+            overflow-y: auto;
+            padding: 32px;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.22);
+        }
+        .st-test-hdr {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+        }
+        .st-test-hdr h2 { margin: 0; font-size: 20px; font-weight: 700; color: #1c1c2e; }
+        .st-close-btn {
+            background: #f3f4f6;
+            border: none;
+            border-radius: 8px;
+            width: 32px;
+            height: 32px;
+            font-size: 16px;
+            cursor: pointer;
+            color: #6b7280;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .st-close-btn:hover { background: #fee2e2; color: #ef4444; }
+        .st-question-block {
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .st-question-block:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .st-q-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #6366f1;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        .st-q-text {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1c1c2e;
+            margin-bottom: 14px;
+        }
+        .st-answer-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1.5px solid #e5e7eb;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-size: 14px;
+            color: #374151;
+        }
+        .st-answer-label:hover { border-color: #6366f1; background: #f5f3ff; }
+        .st-answer-label input[type=radio] { accent-color: #6366f1; flex-shrink: 0; }
+        .st-test-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 28px;
+            justify-content: flex-end;
+        }
+        .st-submit-btn {
+            padding: 10px 28px;
+            background: #6366f1;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: background 0.15s;
+        }
+        .st-submit-btn:hover { background: #4f46e5; }
+        .st-cancel-btn {
+            padding: 10px 18px;
+            background: #f3f4f6;
+            color: #374151;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            transition: background 0.15s;
+        }
+        .st-cancel-btn:hover { background: #e5e7eb; }
+
+        /* -- Result screen -- */
+        .st-result-hero {
+            text-align: center;
+            padding: 28px 0 24px;
+        }
+        .st-result-circle {
+            width: 88px;
+            height: 88px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: #fff;
+            font-size: 22px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+        .st-result-title { font-size: 20px; font-weight: 700; color: #1c1c2e; margin: 0 0 6px; }
+        .st-result-sub { font-size: 14px; color: #6b7280; margin: 0; }
+        .st-detail-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            padding: 11px 0;
+            border-bottom: 1px solid #f3f4f6;
+            gap: 16px;
+        }
+        .st-detail-row:last-of-type { border-bottom: none; }
+        .st-detail-q { font-size: 13px; font-weight: 500; color: #374151; }
+        .st-detail-a { font-size: 12px; color: #9ca3af; margin-top: 3px; }
+        .st-ans-badge {
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .st-ans-badge.correct { background: #d1fae5; color: #065f46; }
+        .st-ans-badge.wrong { background: #fee2e2; color: #991b1b; }
+    </style>
 </head>
 <body>
 
-<div class="topbar">
-    <h1>LMS</h1>
-    <div class="topbar-right">
-        <span id="userInfo"></span>
-        <button class="secondary" onclick="logout()">Выйти</button>
+<!-- Non-student layout (Admin / Manager) -->
+<div id="simpleLayout" style="display:none">
+    <div class="topbar">
+        <h1>LMS</h1>
+        <div class="topbar-right">
+            <span id="simpleUserInfo"></span>
+            <button class="secondary" onclick="logout()">Выйти</button>
+        </div>
     </div>
+    <div class="container" id="simpleContent"></div>
 </div>
 
-<div class="container" id="content"></div>
+<!-- Student TrustExam-style layout -->
+<div id="studentLayout">
+    <aside class="st-sidebar">
+        <div class="st-logo">
+            <div class="st-logo-mark">L</div>
+            <span class="st-logo-text">LMS</span>
+        </div>
+        <nav class="st-nav">
+            <button class="st-nav-btn active">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+                Мои задания
+            </button>
+        </nav>
+        <div class="st-sidebar-footer">
+            <div class="st-avatar" id="stAvatar">С</div>
+            <div class="st-footer-info">
+                <div class="st-footer-name" id="stName">Студент</div>
+                <div class="st-footer-role">Студент</div>
+            </div>
+            <button class="st-logout-btn" onclick="logout()" title="Выйти">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            </button>
+        </div>
+    </aside>
+
+    <main class="st-main">
+        <div class="st-header">
+            <div class="st-header-title">Задания</div>
+            <div class="st-filter-tabs">
+                <button class="st-ftab active" onclick="filterStatus('all', this)">Все</button>
+                <button class="st-ftab" onclick="filterStatus('PENDING', this)">В процессе</button>
+                <button class="st-ftab" onclick="filterStatus('COMPLETED', this)">Выполненные</button>
+            </div>
+        </div>
+        <div class="st-content">
+            <div id="stList"></div>
+        </div>
+    </main>
+</div>
+
+<!-- Test overlay -->
+<div id="testOverlay">
+    <div class="st-test-card" id="testCard"></div>
+</div>
 
 <script src="api.js"></script>
 <script>
@@ -24,93 +471,150 @@
     const role = getRole();
     const name = getFullName();
     const displayName = (name && name !== 'undefined' && name !== 'null') ? name : '';
-    document.getElementById("userInfo").textContent = displayName ? `${displayName} · ${role}` : role;
 
-    const content = document.getElementById("content");
-
-    if (role === "ADMIN") {
-        content.innerHTML = `
-        <div class="card">
-            <h2>Администратор</h2>
-            <p class="muted">Управление пользователями и ролями.</p>
-            <button onclick="location.href='admin.html'">Открыть пользователей</button>
-        </div>`;
+    if (role === 'STUDENT') {
+        document.getElementById('studentLayout').classList.add('visible');
+        initStudent();
+    } else {
+        document.getElementById('simpleLayout').style.display = 'block';
+        document.getElementById('simpleUserInfo').textContent = displayName ? `${displayName} · ${role}` : role;
+        initSimple();
     }
 
-    if (role === "MANAGER") {
-        content.innerHTML = `
-        <div class="card">
-            <h2>Менеджер</h2>
-            <p class="muted">Создание тестов, заданий и просмотр результатов.</p>
-            <button onclick="location.href='manager.html'">Открыть панель менеджера</button>
-        </div>`;
-    }
-
-    if (role === "STUDENT") {
-        content.innerHTML = `
-        <div class="card">
-            <h2>Мои задания</h2>
-            <div id="assignments" class="empty-state">Загрузка…</div>
-        </div>
-        <div id="testArea"></div>`;
-        loadStudentData();
-    }
-
-    async function loadStudentData() {
-        try {
-            const assignments = await apiGet("/assignments");
-            const box = document.getElementById("assignments");
-
-            if (assignments.length === 0) { box.className = "empty-state"; box.textContent = "Заданий пока нет"; return; }
-
-            box.className = "";
-            box.innerHTML = assignments.map(a => `
-            <div class="row">
-                <div>
-                    <div><b>${escapeHtml(a.title)}</b></div>
-                    <div class="muted">${escapeHtml(a.description || "")}</div>
-                    <div class="muted">Тест: ${escapeHtml(a.testTitle || "-")} · Срок: ${formatDate(a.deadline)}</div>
-                </div>
-                <div>
-                    ${a.status === "COMPLETED"
-                        ? `<span class="badge success">Выполнено</span>`
-                        : a.testId
-                            ? `<button onclick="openTest(${a.testId}, ${a.id})">Пройти тест</button>`
-                            : `<button onclick="completeAssignment(${a.id})">Отметить выполненным</button>`}
-                </div>
-            </div>`).join("");
-                } catch (err) {
-            document.getElementById("assignments").textContent = "Ошибка: " + err.message;
+    function initSimple() {
+        const content = document.getElementById('simpleContent');
+        if (role === 'ADMIN') {
+            content.innerHTML = `
+            <div class="card">
+                <h2>Администратор</h2>
+                <p class="muted">Управление пользователями и ролями.</p>
+                <button onclick="location.href='admin.html'">Открыть пользователей</button>
+            </div>`;
+        } else if (role === 'MANAGER') {
+            content.innerHTML = `
+            <div class="card">
+                <h2>Менеджер</h2>
+                <p class="muted">Создание тестов, заданий и просмотр результатов.</p>
+                <button onclick="location.href='manager.html'">Открыть панель менеджера</button>
+            </div>`;
         }
+    }
+
+    // ===== Student logic =====
+    let allAssignments = [];
+    let currentFilter = 'all';
+
+    const initials = displayName
+        ? displayName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+        : 'С';
+    document.getElementById('stAvatar').textContent = initials;
+    document.getElementById('stName').textContent = displayName || 'Студент';
+
+    async function initStudent() {
+        showListLoading();
+        try {
+            allAssignments = await apiGet('/assignments');
+            renderList();
+        } catch (e) {
+            document.getElementById('stList').innerHTML =
+                `<div class="st-empty"><div class="st-empty-icon">⚠️</div><p>Ошибка: ${escapeHtml(e.message)}</p></div>`;
+        }
+    }
+
+    function showListLoading() {
+        document.getElementById('stList').innerHTML =
+            `<div class="st-empty"><div class="st-empty-icon">⏳</div><p>Загрузка…</p></div>`;
+    }
+
+    function filterStatus(status, btn) {
+        currentFilter = status;
+        document.querySelectorAll('.st-ftab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderList();
+    }
+
+    function renderList() {
+        const filtered = currentFilter === 'all'
+            ? allAssignments
+            : allAssignments.filter(a => a.status === currentFilter);
+
+        if (filtered.length === 0) {
+            document.getElementById('stList').innerHTML = `
+            <div class="st-empty">
+                <div class="st-empty-icon">📭</div>
+                <h3>Заданий нет</h3>
+                <p>${currentFilter === 'all' ? 'Вам ещё не назначили заданий' : 'Нет заданий в этой категории'}</p>
+            </div>`;
+            return;
+        }
+
+        const rows = filtered.map(a => {
+            const done = a.status === 'COMPLETED';
+            const scoreHtml = (a.score != null && a.totalPoints != null)
+                ? `<div class="st-score">${a.score} / ${a.totalPoints}</div>` : '';
+            let actionHtml;
+            if (done) {
+                actionHtml = `${scoreHtml}<span class="st-badge-done">● Выполнено</span>`;
+            } else if (a.testId) {
+                actionHtml = `<button class="st-action-btn" onclick="openTest(${a.testId}, ${a.id})">Пройти тест →</button>`;
+            } else {
+                actionHtml = `<button class="st-action-btn plain" onclick="completeAssignment(${a.id})">Отметить выполненным</button>`;
+            }
+
+            const testStr = a.testTitle && a.testTitle !== '-' ? `Тест: ${escapeHtml(a.testTitle)} · ` : '';
+            return `
+            <div class="st-list-row">
+                <div class="st-dot ${done ? 'completed' : 'pending'}"></div>
+                <div class="st-row-body">
+                    <div class="st-row-title">${escapeHtml(a.title)}</div>
+                    <div class="st-row-sub">${a.description ? escapeHtml(a.description) + ' · ' : ''}${testStr}Срок: ${formatDate(a.deadline)}</div>
+                </div>
+                <div class="st-row-right">${actionHtml}</div>
+            </div>`;
+        }).join('');
+
+        document.getElementById('stList').innerHTML = `<div class="st-list">${rows}</div>`;
     }
 
     async function completeAssignment(id) {
         await apiPut(`/assignments/${id}/complete`);
-        loadStudentData();
+        allAssignments = await apiGet('/assignments');
+        renderList();
     }
 
+    // ===== Test =====
     async function openTest(testId, assignmentId) {
         const test = await apiGet(`/tests/${testId}`);
         window.currentTest = test;
 
-        let html = `<div class="card"><h2>${escapeHtml(test.title)}</h2>`;
+        const card = document.getElementById('testCard');
+        card.innerHTML = `
+        <div class="st-test-hdr">
+            <h2>${escapeHtml(test.title)}</h2>
+            <button class="st-close-btn" onclick="closeTest()">✕</button>
+        </div>
+        ${test.questions.map((q, idx) => `
+            <div class="st-question-block">
+                <div class="st-q-label">Вопрос ${idx + 1}</div>
+                <div class="st-q-text">${escapeHtml(q.questionText)}</div>
+                ${q.answers.map(a => `
+                    <label class="st-answer-label">
+                        <input type="radio" name="q_${q.id}" value="${a.id}">
+                        <span>${a.label}. ${escapeHtml(a.answerText)}</span>
+                    </label>
+                `).join('')}
+            </div>
+        `).join('')}
+        <div class="st-test-actions">
+            <button class="st-cancel-btn" onclick="closeTest()">Отмена</button>
+            <button class="st-submit-btn" onclick="submitTest(${testId}, ${assignmentId})">Сдать тест →</button>
+        </div>`;
 
-        test.questions.forEach(q => {
-            html += `<div class="question-block"><p><b>${escapeHtml(q.questionText)}</b></p>`;
-            q.answers.forEach(a => {
-                html += `
-                <label class="answer-row">
-                    <input type="radio" name="q_${q.id}" value="${a.id}">
-                    <span>${a.label}. ${escapeHtml(a.answerText)}</span>
-                </label>`;
-            });
-            html += `</div>`;
-        });
+        document.getElementById('testOverlay').classList.add('open');
+    }
 
-        html += `<button onclick="submitTest(${testId}, ${assignmentId})">Сдать тест</button></div>`;
-
-        document.getElementById("testArea").innerHTML = html;
-        document.getElementById("assignments").parentElement.scrollIntoView({ behavior: "smooth" });
+    function closeTest() {
+        document.getElementById('testOverlay').classList.remove('open');
     }
 
     async function submitTest(testId, assignmentId) {
@@ -118,41 +622,45 @@
         const answers = [];
 
         for (const q of test.questions) {
-            const selected = document.querySelector(`input[name="q_${q.id}"]:checked`);
-            if (!selected) { alert("Ответьте на все вопросы"); return; }
-            answers.push({ questionId: q.id, selectedAnswerId: Number(selected.value) });
+            const sel = document.querySelector(`input[name="q_${q.id}"]:checked`);
+            if (!sel) { alert('Ответьте на все вопросы'); return; }
+            answers.push({ questionId: q.id, selectedAnswerId: Number(sel.value) });
         }
 
         const result = await apiPost(`/tests/${testId}/submit`, { answers });
-        if (!result.ok) {alert("Ошибка отправки теста: " + result.text); return; }
+        if (!result.ok) { alert('Ошибка отправки теста: ' + result.text); return; }
 
         const r = result.data;
+        const pct = r.totalPoints > 0 ? Math.round((r.score / r.totalPoints) * 100) : 0;
 
-        let html = `
-        <div class="card">
-            <h2>Результат: ${escapeHtml(r.testTitle)}</h2>
-            <p>Правильных ответов: <b>${r.score} / ${r.totalPoints}</b> · Неправильных: ${r.incorrectCount}</p>`;
-
-        r.details.forEach(d => {
-            html += `
-            <div class="row">
-                <div>
-                    <div>${escapeHtml(d.questionText)}</div>
-                    <div class="muted">Ваш ответ: ${escapeHtml(d.selectedAnswer)}${!d.correct ? " · Верно: " + escapeHtml(d.correctAnswer) : ""}</div>
+        document.getElementById('testCard').innerHTML = `
+        <div class="st-result-hero">
+            <div class="st-result-circle">${r.score}/${r.totalPoints}</div>
+            <div class="st-result-title">${escapeHtml(r.testTitle)}</div>
+            <p class="st-result-sub">${pct}% правильных · ${r.incorrectCount} ошибок</p>
+        </div>
+        <div style="margin-top:20px">
+            ${r.details.map(d => `
+                <div class="st-detail-row">
+                    <div>
+                        <div class="st-detail-q">${escapeHtml(d.questionText)}</div>
+                        <div class="st-detail-a">Ваш: ${escapeHtml(d.selectedAnswer)}${!d.correct ? ' · Верно: ' + escapeHtml(d.correctAnswer) : ''}</div>
+                    </div>
+                    <span class="st-ans-badge ${d.correct ? 'correct' : 'wrong'}">${d.correct ? '✓ Верно' : '✗ Неверно'}</span>
                 </div>
-                <span class="badge ${d.correct ? "success" : "danger"}">${d.correct ? "Верно" : "Неверно"}</span>
-            </div>`;
-        });
-
-        html += `<button onclick="finishTest()" style="margin-top:12px;">Готово</button></div>`;
-        document.getElementById("testArea").innerHTML = html;
+            `).join('')}
+        </div>
+        <div class="st-test-actions">
+            <button class="st-submit-btn" onclick="finishTest(${assignmentId})">Готово</button>
+        </div>`;
 
         if (assignmentId) await apiPut(`/assignments/${assignmentId}/complete`);
     }
 
-    function finishTest() {
-        document.getElementById("testArea").innerHTML = "";
-        loadStudentData();
+    async function finishTest(assignmentId) {
+        closeTest();
+        allAssignments = await apiGet('/assignments');
+        renderList();
     }
 </script>
 </body>
