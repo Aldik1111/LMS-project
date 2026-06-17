@@ -10,5 +10,5 @@ public class LoginResponse {
     private String role;
     private Long userId;
     private String email;
-    private String fullname;
+    private String fullName;
 }

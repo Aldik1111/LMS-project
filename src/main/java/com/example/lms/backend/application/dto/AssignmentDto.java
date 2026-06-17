@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 
 public class AssignmentDto {
-    private long id;
+    private Long id;
     private String title;
     private String description;
     private Long studentId;
