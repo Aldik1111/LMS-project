@@ -21,7 +21,13 @@ public class UserController {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
-    @GetMapping("/{id}")
+    // GET /api/users/students — только студенты (для выпадашек менеджера)
+    @GetMapping("/students")
+    public ResponseEntity<List<UserDto>> getStudents() {
+        return ResponseEntity.ok(userService.getAllStudents());
+    }
+
+    @GetMapping("/{id:\\d+}")
     public ResponseEntity<UserDto> getUserById(@PathVariable Long id) {
         try {
             return ResponseEntity.ok(userService.getUserById(id));
@@ -40,7 +46,7 @@ public class UserController {
         }
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{id:\\d+}")
     public ResponseEntity<UserDto> updateUser(@PathVariable Long id, @RequestBody UserDto dto) {
         try {
             return ResponseEntity.ok(userService.updateUser(id, dto));
@@ -49,7 +55,7 @@ public class UserController {
         }
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id:\\d+}")
     public ResponseEntity<UserDto> deleteUser(@PathVariable Long id) {
         try {
             userService.deleteUser(id);
