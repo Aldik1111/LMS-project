@@ -33,15 +33,15 @@ public class AssignmentController {
         return ResponseEntity.ok(assignmentService.getAllAssignments());
     }
 
-    // POST /api/assignemtns
+    // POST /api/assignments
     @PostMapping
-    public ResponseEntity<AssignmentDto> createAssignment(@RequestBody AssignmentDto dto) {
+    public ResponseEntity<?> createAssignment(@RequestBody AssignmentDto dto) {
         try {
             User currentUser = securityUtils.getCurrentUser();
             AssignmentDto created = assignmentService.createAssignment(dto, currentUser.getId());
             return ResponseEntity.status(201).body(created);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 

@@ -39,43 +39,41 @@ public class TestController {
         }
     }
 
-    // POST /api/tests only for meneger
+    // POST /api/tests only for manager
     @PostMapping
-    public ResponseEntity<TestDto> createTest(@RequestBody TestDto dto){
+    public ResponseEntity<?> createTest(@RequestBody TestDto dto){
         try {
             User currentUser = securityUtils.getCurrentUser();
             TestDto created = testService.createTest(dto, currentUser.getId());
             return ResponseEntity.status(201).body(created);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     // DELETE /api/tests/{id}
     @DeleteMapping("/{id}")
-    public ResponseEntity<TestDto> deleteTest(@PathVariable Long id){
+    public ResponseEntity<?> deleteTest(@PathVariable Long id){
         try{
             testService.deleteTest(id);
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     // POST /api/tests/{id}/submit
     @PostMapping("/{id}/submit")
-    public ResponseEntity<TestResultDto> submitTest(
+    public ResponseEntity<?> submitTest(
             @PathVariable Long id,
             @RequestBody TestSubmitRequest request) {
         try {
             User currentUser = securityUtils.getCurrentUser();
-
-            request.setTestId(id); // устонавливаем тестИД
-
-            TestResultDto resut = testService.submitTest(request,currentUser.getId());
-            return ResponseEntity.ok(resut);
+            request.setTestId(id);
+            TestResultDto result = testService.submitTest(request, currentUser.getId());
+            return ResponseEntity.ok(result);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 }

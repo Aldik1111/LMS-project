@@ -28,7 +28,7 @@ public class StatisticsService {
     }
 
     public List<TestResultDto> getResultsByStudent(Long studentId) { // Stata by student
-        return testResultRepository.findAllByStudentId(studentId)
+        return testResultRepository.findAllByStudentIdWithDetails(studentId)
                 .stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());

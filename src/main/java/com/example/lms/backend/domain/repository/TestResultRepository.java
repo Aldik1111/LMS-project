@@ -26,4 +26,10 @@ public interface TestResultRepository extends JpaRepository<TestResult,Long> {
             "WHERE tr.test.id = :testId")
     List<TestResult> findAllByTestIDwithDetails(@Param("testId") Long testId);
 
+    @Query("SELECT tr FROM TestResult tr " +
+            "JOIN FETCH tr.student " +
+            "JOIN FETCH tr.test " +
+            "WHERE tr.student.id = :studentId")
+    List<TestResult> findAllByStudentIdWithDetails(@Param("studentId") Long studentId);
+
 }

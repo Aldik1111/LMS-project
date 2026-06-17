@@ -40,6 +40,7 @@ public class AssignmentService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
     public AssignmentDto createAssignment(AssignmentDto dto, Long creatorId) {
         User student = userRepository.findById(dto.getStudentId())
                 .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -67,6 +68,7 @@ public class AssignmentService {
         return toDto(saved);
     }
 
+    @Transactional
     public AssignmentDto completeAssignment(Long assignmentId){
         Assignment assignment = assignmentRepository.findById(assignmentId)
                 .orElseThrow(() -> new RuntimeException("Assignment not found"));

@@ -22,7 +22,9 @@
     requireAuth();
 
     const role = getRole();
-    document.getElementById("userInfo").textContent = `${getFullName()} · ${role}`;
+    const name = getFullName();
+    const displayName = (name && name !== 'undefined' && name !== 'null') ? name : '';
+    document.getElementById("userInfo").textContent = displayName ? `${displayName} · ${role}` : role;
 
     const content = document.getElementById("content");
 
