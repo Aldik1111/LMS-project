@@ -23,4 +23,6 @@ public class AssignmentDto {
     private AssignmentStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime deadline;
+    private Integer score;
+    private Integer totalPoints;
 }

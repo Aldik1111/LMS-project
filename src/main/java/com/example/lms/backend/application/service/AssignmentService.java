@@ -4,9 +4,11 @@ import com.example.lms.backend.application.dto.AssignmentDto;
 import com.example.lms.backend.domain.entity.Assignment;
 import com.example.lms.backend.domain.entity.AssignmentStatus;
 import com.example.lms.backend.domain.entity.Test;
+import com.example.lms.backend.domain.entity.TestResult;
 import com.example.lms.backend.domain.entity.User;
 import com.example.lms.backend.domain.repository.AssignmentRepository;
 import com.example.lms.backend.domain.repository.TestRepository;
+import com.example.lms.backend.domain.repository.TestResultRepository;
 import com.example.lms.backend.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,7 @@ public class AssignmentService {
     private final AssignmentRepository assignmentRepository;
     private final UserRepository userRepository;
     private final TestRepository testRepository;
+    private final TestResultRepository testResultRepository;
 
     @Transactional(readOnly = true)
     public List<AssignmentDto> getAllAssignments() { // For manager
@@ -34,10 +37,21 @@ public class AssignmentService {
 
     @Transactional(readOnly = true)
     public List<AssignmentDto> getAssignmentsForStudents(Long studentId){ // For students
-        return assignmentRepository.findAllByStudentId(studentId)
-                .stream()
-                .map(this::toDto)
-                .collect(Collectors.toList());
+        List<Assignment> assignments = assignmentRepository.findAllByStudentId(studentId);
+        List<TestResult> results = testResultRepository.findAllByStudentId(studentId);
+        return assignments.stream().map(a -> {
+            AssignmentDto dto = toDto(a);
+            if (a.getTest() != null) {
+                results.stream()
+                    .filter(r -> r.getTest().getId().equals(a.getTest().getId()))
+                    .findFirst()
+                    .ifPresent(r -> {
+                        dto.setScore(r.getScore());
+                        dto.setTotalPoints(r.getTotalPoints());
+                    });
+            }
+            return dto;
+        }).collect(Collectors.toList());
     }
 
     @Transactional
@@ -96,7 +110,9 @@ public class AssignmentService {
                 a.getTest() != null ? a.getTest().getTitle() : "-",
                 a.getStatus(),
                 a.getCreatedAt(),
-                a.getDeadline()
+                a.getDeadline(),
+                null,
+                null
         );
     }
 
