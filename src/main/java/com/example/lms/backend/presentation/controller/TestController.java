@@ -34,6 +34,7 @@ public class TestController {
             boolean isStudent = currentUser instanceof Student;
             return ResponseEntity.ok(testService.getTestById(id, isStudent));
         } catch (RuntimeException e) {
+            e.printStackTrace();
             return ResponseEntity.notFound().build();
         }
     }
@@ -71,7 +72,7 @@ public class TestController {
 
             request.setTestId(id); // устонавливаем тестИД
 
-            TestResultDto resut = testService.sumbitTest(request,currentUser.getId());
+            TestResultDto resut = testService.submitTest(request,currentUser.getId());
             return ResponseEntity.ok(resut);
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().build();

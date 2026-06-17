@@ -33,8 +33,12 @@ public class TestService {
     }
 
     public TestDto getTestById(Long testId, boolean isStudent){
-        Test test = testRepository.findbyIDWithQAndA(testId)
+        Test test = testRepository.findByIdWithQuestions(testId)
                 .orElseThrow(() -> new RuntimeException("Test not found"));
+
+        List<Question> questionWithAnswers = questionRepository.findByTestIdWithAnswers(testId);
+        test.setQuestions(questionWithAnswers);
+
         return toDtoFull(test, isStudent);
     }
 
@@ -94,10 +98,13 @@ public class TestService {
     }
 
     @Transactional
-    public TestResultDto sumbitTest(TestSubmitRequest request, Long studentId){
+    public TestResultDto submitTest(TestSubmitRequest request, Long studentId){
         // Load test
-        Test test = testRepository.findbyIDWithQAndA(request.getTestId())
+        Test test = testRepository.findByIdWithQuestions(request.getTestId())
                 .orElseThrow(() -> new RuntimeException("Test not found"));
+
+        List<Question> questionWithAnswers = questionRepository.findByTestIdWithAnswers(request.getTestId());
+        test.setQuestions(questionWithAnswers);
 
         User student = userRepository.findById(studentId)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -133,7 +140,7 @@ public class TestService {
                     .findFirst()
                     .orElse(null);
 
-            boolean isCorrect = correctAnswer.isCorrect();
+            boolean isCorrect = selectedAnswer.isCorrect();
             if(isCorrect) correctCount++;
 
             // Save student answer
