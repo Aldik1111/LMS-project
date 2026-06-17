@@ -26,7 +26,7 @@ public class AssignmentController {
 
         if (currentUser instanceof Student student) {
             return ResponseEntity.ok(
-                    assignmentService.getAssignmentsForGroup(student.getGroupNumber())
+                    assignmentService.getAssignmentsForGroup(student.getGroupNumber(), currentUser.getId())
             );
         }
 
