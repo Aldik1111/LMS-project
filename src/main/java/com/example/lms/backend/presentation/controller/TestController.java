@@ -4,7 +4,7 @@ import com.example.lms.backend.application.dto.TestDto;
 import com.example.lms.backend.application.dto.TestResultDto;
 import com.example.lms.backend.application.dto.TestSubmitRequest;
 import com.example.lms.backend.application.service.TestService;
-import com.example.lms.backend.domain.entity.Role;
+import com.example.lms.backend.domain.entity.Student;
 import com.example.lms.backend.domain.entity.User;
 import com.example.lms.backend.infrastructure.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +31,7 @@ public class TestController {
     public ResponseEntity<TestDto> getTestById(@PathVariable Long id){
         try {
             User currentUser = securityUtils.getCurrentUser();
-            boolean isStudent = currentUser.getRole() == Role.STUDENT;
+            boolean isStudent = currentUser instanceof Student;
             return ResponseEntity.ok(testService.getTestById(id, isStudent));
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();

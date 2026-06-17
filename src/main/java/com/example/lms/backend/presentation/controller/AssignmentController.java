@@ -3,7 +3,7 @@ package com.example.lms.backend.presentation.controller;
 
 import com.example.lms.backend.application.dto.AssignmentDto;
 import com.example.lms.backend.application.service.AssignmentService;
-import com.example.lms.backend.domain.entity.Role;
+import com.example.lms.backend.domain.entity.Student;
 import com.example.lms.backend.domain.entity.User;
 import com.example.lms.backend.infrastructure.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ public class AssignmentController {
     public ResponseEntity<List<AssignmentDto>> getAssignments() {
         User currentUser = securityUtils.getCurrentUser();
 
-        if (currentUser.getRole() == Role.STUDENT) {
+        if (currentUser instanceof Student) {
             return ResponseEntity.ok(
                     assignmentService.getAssignmentsForStudents(currentUser.getId())
             );
@@ -41,7 +41,7 @@ public class AssignmentController {
             AssignmentDto created = assignmentService.createAssignment(dto, currentUser.getId());
             return ResponseEntity.status(201).body(created);
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.badRequest().build();
         }
     }
 

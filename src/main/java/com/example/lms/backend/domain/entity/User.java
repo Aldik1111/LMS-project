@@ -2,14 +2,18 @@ package com.example.lms.backend.domain.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
+
 @Entity
 @Table(name = "users")
+@Inheritance(strategy = InheritanceType.JOINED)
+@DiscriminatorColumn(name = "role", discriminatorType = DiscriminatorType.STRING)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 
-public class User {
+public abstract class User {
     @Id // Primary key
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Auto increament
     private Long id;
@@ -22,10 +26,6 @@ public class User {
 
     @Column(nullable = false)
     private String fullName;
-
-    @Enumerated(EnumType.STRING) // save as "ADMIN/Manager/Student"
-    @Column(nullable = false)
-    private Role role;
 
     @Column(nullable = false)
     private boolean active = true;

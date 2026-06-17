@@ -1,6 +1,5 @@
 package com.example.lms.backend.application.dto;
 
-import com.example.lms.backend.domain.entity.Role;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,6 +12,6 @@ public class UserDto {
     private String email;
     private String password;
     private String fullName;
-    private Role role;
+    private String role;
     private Boolean active;
 }

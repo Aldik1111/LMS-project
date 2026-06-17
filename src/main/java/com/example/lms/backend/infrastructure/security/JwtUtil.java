@@ -1,6 +1,7 @@
 package com.example.lms.backend.infrastructure.security;
 
 import com.example.lms.backend.domain.entity.User;
+import com.example.lms.backend.domain.entity.RoleResolve;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,7 +33,7 @@ public class JwtUtil {
     public String generateToken(User user) {
         return Jwts.builder()
                 .setSubject(user.getEmail()) // В токен кладем эмейл и тд
-                .claim("role", user.getRole().name())
+                .claim("role", RoleResolve.resolve(user))
                 .claim("userId", user.getId())
                 .setIssuedAt(new Date()) // время создания
                 .setExpiration(  // время истечения

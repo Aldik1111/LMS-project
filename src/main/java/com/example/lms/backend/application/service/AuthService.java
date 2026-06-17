@@ -3,6 +3,7 @@ package com.example.lms.backend.application.service;
 import com.example.lms.backend.application.dto.LoginRequest;
 import com.example.lms.backend.application.dto.LoginResponse;
 import com.example.lms.backend.domain.entity.User;
+import com.example.lms.backend.domain.entity.RoleResolve;
 import com.example.lms.backend.domain.repository.UserRepository;
 import com.example.lms.backend.infrastructure.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +40,7 @@ public class AuthService {
 
         return new LoginResponse(
                 token,
-                user.getRole().name(),
+                RoleResolve.resolve(user),
                 user.getId(),
                 user.getEmail(),
                 user.getFullName()

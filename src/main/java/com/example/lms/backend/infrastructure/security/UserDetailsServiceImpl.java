@@ -1,8 +1,13 @@
 package com.example.lms.backend.infrastructure.security;
 
+import com.example.lms.backend.domain.entity.Admin;
+import com.example.lms.backend.domain.entity.Manager;
+import com.example.lms.backend.domain.entity.Student;
 import com.example.lms.backend.domain.entity.User;
+import com.example.lms.backend.domain.entity.RoleResolve;
 import com.example.lms.backend.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.engine.spi.Managed;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -30,7 +35,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         return new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
                 user.getPassword(),
-                List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())) // example: ROLE_ADMIN
+                List.of(new SimpleGrantedAuthority("ROLE_" + RoleResolve.resolve(user))) // example: ROLE_ADMIN
         );
     }
 }

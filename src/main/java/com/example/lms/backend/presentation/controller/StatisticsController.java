@@ -3,7 +3,7 @@ package com.example.lms.backend.presentation.controller;
 
 import com.example.lms.backend.application.dto.TestResultDto;
 import com.example.lms.backend.application.service.StatisticsService;
-import com.example.lms.backend.domain.entity.Role;
+import com.example.lms.backend.domain.entity.Student;
 import com.example.lms.backend.domain.entity.User;
 import com.example.lms.backend.infrastructure.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +32,7 @@ public class StatisticsController {
     public ResponseEntity<List<TestResultDto>> getResultByStudent(@PathVariable Long studentId){
         User currentUser = securityUtils.getCurrentUser();
 
-        if(currentUser.getRole() == Role.STUDENT && !currentUser.getId().equals(studentId)){
+        if(currentUser instanceof Student && !currentUser.getId().equals(studentId)){
             return ResponseEntity.status(403).build();
         }
         return ResponseEntity.ok(statisticsService.getResultsByStudent(studentId));

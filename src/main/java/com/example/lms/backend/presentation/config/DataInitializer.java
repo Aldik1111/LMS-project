@@ -1,6 +1,6 @@
 package com.example.lms.backend.presentation.config;
 
-import com.example.lms.backend.domain.entity.Role;
+import com.example.lms.backend.domain.entity.Admin;
 import com.example.lms.backend.domain.entity.User;
 import com.example.lms.backend.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,16 +21,15 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) {
 
         if (!userRepository.existsByEmail("admin@lms.com")) {
-            User admin = User.builder()
+            Admin admin = Admin.builder()
                     .email("admin@lms.com")
                     .password(passwordEncoder.encode("admin"))
                     .fullName("Admin")
-                    .role(Role.ADMIN)
                     .active(true)
+                    .department("System")
                     .build();
 
             userRepository.save(admin);
-
             log.info("ADMIN CREATED");
         }
         else log.info("ADMIN ALREADY EXISTS");

@@ -31,7 +31,7 @@
         <div class="card">
             <h2>Администратор</h2>
             <p class="muted">Управление пользователями и ролями.</p>
-            <button class="full" onclick="location.href='admin.html'">Открыть пользователей</button>
+            <button onclick="location.href='admin.html'">Открыть пользователей</button>
         </div>`;
     }
 
@@ -40,7 +40,7 @@
         <div class="card">
             <h2>Менеджер</h2>
             <p class="muted">Создание тестов, заданий и просмотр результатов.</p>
-            <button class="full" onclick="location.href='manager.html'">Открыть панель менеджера</button>
+            <button onclick="location.href='manager.html'">Открыть панель менеджера</button>
         </div>`;
     }
 
@@ -105,7 +105,7 @@
             html += `</div>`;
         });
 
-        html += `<button class="full" onclick="submitTest(${testId}, ${assignmentId})">Сдать тест</button></div>`;
+        html += `<button onclick="submitTest(${testId}, ${assignmentId})">Сдать тест</button></div>`;
 
         document.getElementById("testArea").innerHTML = html;
         document.getElementById("assignments").parentElement.scrollIntoView({ behavior: "smooth" });
@@ -142,7 +142,7 @@
             </div>`;
         });
 
-        html += `<button class="full" onclick="finishTest()">Готово</button></div>`;
+        html += `<button onclick="finishTest()" style="margin-top:12px;">Готово</button></div>`;
         document.getElementById("testArea").innerHTML = html;
 
         if (assignmentId) await apiPut(`/assignments/${assignmentId}/complete`);
