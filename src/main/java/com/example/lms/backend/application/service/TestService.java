@@ -203,9 +203,7 @@ public class TestService {
         if (student.getGroupNumber() != null) {
             assignmentRepository.findAllByTargetGroup(student.getGroupNumber()).stream()
                     .filter(a -> a.getTest() != null && a.getTest().getId().equals(test.getId()))
-                    .filter(a -> a.getStatus() == AssignmentStatus.PENDING)
                     .forEach(a -> {
-                        a.setStatus(AssignmentStatus.COMPLETED);
                         assignmentRepository.save(a);
                     });
         }

@@ -5,241 +5,338 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LMS</title>
     <link rel="stylesheet" href="style.css">
-
     <style>
-        /* ===== Student layout ===== */
-        #studentLayout { display: none; height: 100vh; font-family: var(--font-body); background: var(--bg); overflow: hidden; }
+        /* ===== Student dark layout ===== */
+        #studentLayout {
+            display: none; height: 100vh;
+            font-family: var(--font-body);
+            background: var(--bg); overflow: hidden;
+        }
         #studentLayout.visible { display: flex; }
 
+        /* -- Sidebar -- */
         .st-sidebar {
             width: 240px; min-width: 240px;
-            background: var(--surface);
-            border-right: 1px solid var(--border);
+            background: var(--surface); border-right: 1px solid var(--border);
             display: flex; flex-direction: column;
         }
-
-        .st-logo { display: flex; align-items: center; gap: 10px; padding: 22px 20px; border-bottom: 1px solid var(--border); }
+        .st-logo {
+            display: flex; align-items: center; gap: 10px;
+            padding: 22px 20px 20px; border-bottom: 1px solid var(--border);
+        }
         .st-logo-mark {
             width: 36px; height: 36px; border-radius: 10px;
-            background: var(--accent);
-            color: #fff;
+            background: var(--accent); box-shadow: 0 0 18px var(--accent-ring);
             display: flex; align-items: center; justify-content: center;
-            font-weight: 800;
+            font-family: var(--font-display); color: #fff; font-weight: 800; font-size: 18px; flex-shrink: 0;
         }
-
-        .st-nav { flex: 1; padding: 12px; }
+        .st-logo-text { font-family: var(--font-display); font-weight: 700; font-size: 17px; color: var(--text); }
+        .st-nav { flex: 1; padding: 16px 10px; display: flex; flex-direction: column; gap: 2px; }
         .st-nav-btn {
-            width: 100%;
-            padding: 10px;
-            border: none;
-            background: none;
-            text-align: left;
-            color: var(--text-muted);
-            border-radius: 8px;
-            cursor: pointer;
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 11px; border: none; background: none;
+            border-radius: 9px; cursor: pointer; font-size: 14px; font-weight: 500;
+            font-family: var(--font-body); color: var(--text-muted);
+            width: 100%; text-align: left; transition: all .15s; box-shadow: none;
         }
-        .st-nav-btn.active { background: var(--accent-soft); color: var(--accent); }
+        .st-nav-btn:hover { background: var(--surface-2) !important; color: var(--text) !important; box-shadow: none !important; transform: none; }
+        .st-nav-btn.active { background: var(--accent-soft) !important; color: var(--accent) !important; font-weight: 600; box-shadow: none !important; }
+        .st-sidebar-footer { padding: 14px 12px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+        .st-avatar {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: var(--accent-soft); border: 2px solid var(--accent-ring);
+            color: var(--accent); font-weight: 700; font-size: 13px;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .st-footer-info { flex: 1; min-width: 0; }
+        .st-footer-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .st-footer-role { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+        .st-logout-btn { background: none; border: none; cursor: pointer; padding: 6px 8px; color: var(--text-faint); border-radius: 6px; transition: all .15s; }
+        .st-logout-btn:hover { color: var(--danger); background: var(--danger-bg); }
 
+        /* -- Main -- */
         .st-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-
         .st-header {
-            padding: 14px 24px;
-            display: flex; justify-content: space-between;
-            border-bottom: 1px solid var(--border);
+            background: rgba(27,23,20,.85); backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--border); padding: 14px 28px;
+            display: flex; align-items: center; justify-content: space-between; gap: 16px;
+            position: sticky; top: 0; z-index: 50;
         }
+        .st-header-title { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--text); }
+        .st-filter-tabs { display: flex; gap: 3px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 9px; padding: 3px; }
+        .st-ftab { padding: 5px 14px; border: none; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 500; background: none; color: var(--text-muted); font-family: var(--font-body); transition: all .15s; }
+        .st-ftab.active { background: var(--accent); color: #fff; font-weight: 600; }
+        .st-ftab:not(.active):hover { color: var(--text); background: var(--surface); }
+        .st-content { flex: 1; overflow-y: auto; padding: 24px 28px; }
 
-        .st-content { padding: 24px; overflow-y: auto; }
-
-        .st-list { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
-
-        .st-list-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 14px 18px;
-            border-bottom: 1px solid var(--border);
-        }
-
+        /* -- Assignment list -- */
+        .st-list { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
+        .st-list-row { display: flex; align-items: center; padding: 15px 20px; border-bottom: 1px solid var(--border-soft); gap: 14px; transition: background .1s; }
         .st-list-row:last-child { border-bottom: none; }
-
-        .st-row-title { font-weight: 600; }
+        .st-list-row:hover { background: var(--surface-2); }
+        .st-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+        .st-dot.pending { background: var(--pending); }
+        .st-dot.completed { background: var(--success); }
+        .st-row-body { flex: 1; min-width: 0; }
+        .st-row-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
         .st-row-sub { font-size: 12px; color: var(--text-muted); }
+        .st-row-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
+        .st-score { font-size: 13px; font-weight: 700; color: var(--accent); }
+        .st-badge-done { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: var(--success-bg); color: var(--success); }
+        .st-action-btn { padding: 7px 16px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); cursor: pointer; font-size: 13px; font-weight: 600; font-family: var(--font-body); transition: background .15s; box-shadow: none; }
+        .st-action-btn:hover { background: var(--accent-hover); transform: none; box-shadow: none; }
+        .st-action-btn:active { transform: none; }
+        .st-action-btn.plain { background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); }
+        .st-action-btn.plain:hover { background: var(--surface); color: var(--text); }
 
-        .st-action-btn {
-            padding: 6px 14px;
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-        }
+        /* -- Empty state -- */
+        .st-empty { text-align: center; padding: 60px 20px; color: var(--text-faint); }
+        .st-empty-icon { font-size: 42px; margin-bottom: 12px; }
+        .st-empty h3 { margin: 0 0 6px; color: var(--text-muted); font-size: 15px; font-weight: 600; }
+        .st-empty p { margin: 0; font-size: 13px; }
 
-        .st-badge-done {
-            font-size: 12px;
-            color: var(--success);
-        }
-
-        /* overlay */
-        #testOverlay {
-            position: fixed;
-            inset: 0;
-            display: none;
-            background: rgba(0,0,0,0.6);
-            align-items: center;
-            justify-content: center;
-        }
-
+        /* -- Test overlay -- */
+        #testOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 300; display: none; align-items: center; justify-content: center; padding: 20px; }
         #testOverlay.open { display: flex; }
+        .st-test-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); width: 100%; max-width: 680px; max-height: 88vh; overflow-y: auto; padding: 32px; box-shadow: var(--shadow-lg); }
+        .st-test-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+        .st-test-hdr h2 { margin: 0; font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--text); }
+        .st-close-btn { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; width: 32px; height: 32px; font-size: 14px; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; justify-content: center; transition: all .15s; }
+        .st-close-btn:hover { background: var(--danger-bg); color: var(--danger); border-color: var(--danger); }
+        .st-question-block { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
+        .st-question-block:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .st-q-label { font-size: 11px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .st-q-text { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 14px; }
+        .st-answer-label { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: var(--radius-sm); border: 1.5px solid var(--border); margin-bottom: 8px; cursor: pointer; transition: all .15s; font-size: 14px; color: var(--text-muted); }
+        .st-answer-label:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--text); }
+        .st-answer-label input[type=radio] { accent-color: var(--accent); flex-shrink: 0; }
+        .st-test-actions { display: flex; gap: 10px; margin-top: 28px; justify-content: flex-end; }
+        .st-submit-btn { padding: 10px 28px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); cursor: pointer; font-size: 15px; font-weight: 600; font-family: var(--font-body); transition: background .15s; }
+        .st-submit-btn:hover { background: var(--accent-hover); }
+        .st-cancel-btn { padding: 10px 18px; background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; font-size: 15px; font-weight: 500; font-family: var(--font-body); transition: all .15s; }
+        .st-cancel-btn:hover { background: var(--surface); color: var(--text); }
 
-        .st-test-card {
-            background: var(--surface);
-            padding: 24px;
-            border-radius: 12px;
-            width: 600px;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .st-answer-label {
-            display: block;
-            margin: 6px 0;
-        }
+        /* -- Result screen -- */
+        .st-result-hero { text-align: center; padding: 28px 0 24px; }
+        .st-result-circle { width: 88px; height: 88px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 30px var(--accent-ring); color: #fff; font-size: 22px; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+        .st-result-title { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--text); margin: 0 0 6px; }
+        .st-result-sub { font-size: 14px; color: var(--text-muted); margin: 0; }
+        .st-detail-row { display: flex; align-items: flex-start; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid var(--border); gap: 16px; }
+        .st-detail-row:last-of-type { border-bottom: none; }
+        .st-detail-q { font-size: 13px; font-weight: 500; color: var(--text); }
+        .st-detail-a { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+        .st-ans-badge { padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
+        .st-ans-badge.correct { background: var(--success-bg); color: var(--success); }
+        .st-ans-badge.wrong { background: var(--danger-bg); color: var(--danger); }
     </style>
 </head>
-
 <body>
 
-<!-- SIMPLE (ADMIN / MANAGER) -->
+<!-- Non-student layout (Admin / Manager) -->
 <div id="simpleLayout" style="display:none">
     <div class="topbar">
         <h1>LMS</h1>
-        <button onclick="logout()">Выйти</button>
+        <div class="topbar-right">
+            <span id="simpleUserInfo"></span>
+            <button class="secondary" onclick="logout()">Выйти</button>
+        </div>
     </div>
-    <div id="simpleContent"></div>
+    <div class="container" id="simpleContent"></div>
 </div>
 
-<!-- STUDENT -->
+<!-- Student dark layout -->
 <div id="studentLayout">
     <aside class="st-sidebar">
         <div class="st-logo">
             <div class="st-logo-mark">L</div>
-            LMS
+            <span class="st-logo-text">LMS</span>
         </div>
-
         <nav class="st-nav">
-            <button class="st-nav-btn active">Мои задания</button>
+            <button class="st-nav-btn active">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+                Мои задания
+            </button>
         </nav>
-
-        <div style="padding:12px; border-top: 1px solid var(--border);">
-            <div id="stName" style="margin-bottom:10px; font-size:13px; color:var(--text-muted);">Студент</div>
-            <button onclick="logout()" style="width:100%; padding:8px; background:transparent; border:1px solid var(--border); color:var(--text-muted); border-radius:8px; cursor:pointer;">Выйти</button>
+        <div class="st-sidebar-footer">
+            <div class="st-avatar" id="stAvatar">С</div>
+            <div class="st-footer-info">
+                <div class="st-footer-name" id="stName">Студент</div>
+                <div class="st-footer-role">Студент</div>
+            </div>
+            <button class="st-logout-btn" onclick="logout()" title="Выйти">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            </button>
         </div>
     </aside>
 
     <main class="st-main">
         <div class="st-header">
-            <div>Задания</div>
+            <div class="st-header-title">Задания</div>
+            <div class="st-filter-tabs">
+                <button class="st-ftab active" onclick="filterStatus('all', this)">Все</button>
+                <button class="st-ftab" onclick="filterStatus('PENDING', this)">В процессе</button>
+                <button class="st-ftab" onclick="filterStatus('COMPLETED', this)">Выполненные</button>
+            </div>
         </div>
-
         <div class="st-content">
             <div id="stList"></div>
         </div>
     </main>
 </div>
 
-<!-- TEST -->
+<!-- Test overlay -->
 <div id="testOverlay">
     <div class="st-test-card" id="testCard"></div>
 </div>
 
 <script src="api.js"></script>
-
 <script>
     requireAuth();
 
     const role = getRole();
-    const name = getFullName() || 'Студент';
-
-    document.getElementById('stName').innerText = name;
-
-    let allAssignments = [];
-    let currentTest = null;
+    const name = getFullName();
+    const displayName = (name && name !== 'undefined' && name !== 'null') ? name : '';
 
     if (role === 'STUDENT') {
         document.getElementById('studentLayout').classList.add('visible');
         initStudent();
     } else {
         document.getElementById('simpleLayout').style.display = 'block';
-        document.getElementById('simpleContent').innerHTML =
-            `<h2>${role}</h2>`;
+        document.getElementById('simpleUserInfo').textContent = displayName ? `${displayName} · ${role}` : role;
+        initSimple();
     }
 
-    /* ================= STUDENT ================= */
+    function initSimple() {
+        const content = document.getElementById('simpleContent');
+        if (role === 'ADMIN') {
+            content.innerHTML = `
+            <div class="card">
+                <h2>Администратор</h2>
+                <p class="muted">Управление пользователями и ролями.</p>
+                <button onclick="location.href='admin.html'">Открыть пользователей</button>
+            </div>`;
+        } else if (role === 'MANAGER') {
+            content.innerHTML = `
+            <div class="card">
+                <h2>Менеджер</h2>
+                <p class="muted">Создание тестов, заданий и просмотр результатов.</p>
+                <button onclick="location.href='manager.html'">Открыть панель менеджера</button>
+            </div>`;
+        }
+    }
+
+    // ===== Student logic =====
+    let allAssignments = [];
+    let currentFilter = 'all';
+
+    const initials = displayName
+        ? displayName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+        : 'С';
+    document.getElementById('stAvatar').textContent = initials;
+    document.getElementById('stName').textContent = displayName || 'Студент';
 
     async function initStudent() {
-        allAssignments = await apiGet('/assignments');
+        showListLoading();
+        try {
+            allAssignments = await apiGet('/assignments');
+            renderList();
+        } catch (e) {
+            document.getElementById('stList').innerHTML =
+                `<div class="st-empty"><div class="st-empty-icon">⚠️</div><p>Ошибка: ${escapeHtml(e.message)}</p></div>`;
+        }
+    }
+
+    function showListLoading() {
+        document.getElementById('stList').innerHTML =
+            `<div class="st-empty"><div class="st-empty-icon">⏳</div><p>Загрузка…</p></div>`;
+    }
+
+    function filterStatus(status, btn) {
+        currentFilter = status;
+        document.querySelectorAll('.st-ftab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
         renderList();
     }
 
     function renderList() {
-        const list = document.getElementById('stList');
+        const filtered = currentFilter === 'all'
+            ? allAssignments
+            : currentFilter === 'COMPLETED'
+                ? allAssignments.filter(a => a.completed)
+                : allAssignments.filter(a => !a.completed);
 
-        if (!allAssignments.length) {
-            list.innerHTML = `<p>Нет заданий</p>`;
+        if (filtered.length === 0) {
+            document.getElementById('stList').innerHTML = `
+            <div class="st-empty">
+                <div class="st-empty-icon">📭</div>
+                <h3>Заданий нет</h3>
+                <p>${currentFilter === 'all' ? 'Вам ещё не назначили заданий' : 'Нет заданий в этой категории'}</p>
+            </div>`;
             return;
         }
 
-        list.innerHTML = `
-        <div class="st-list">
-            ${allAssignments.map(a => `
-                <div class="st-list-row">
-                    <div>
-                        <div class="st-row-title">${escapeHtml(a.title)}</div>
-                        <div class="st-row-sub">
-                            ${escapeHtml(a.description || '')}
-                            · ${formatDate(a.deadline)}
-                        </div>
-                    </div>
+        const rows = filtered.map(a => {
+            const done = a.completed;
+            const scoreHtml = (a.score != null && a.totalPoints != null)
+                ? `<div class="st-score">${a.score} / ${a.totalPoints}</div>` : '';
+            let actionHtml;
+            if (done) {
+                actionHtml = `${scoreHtml}<span class="st-badge-done">● Выполнено</span>`;
+            } else if (a.expired) {
+                actionHtml = `<span class="badge danger" style="padding:4px 12px;border-radius:20px;background:var(--danger-bg);color:var(--danger);font-size:12px;font-weight:600;">Срок истёк</span>`;
+            } else if (a.testId) {
+                actionHtml = `<button class="st-action-btn" onclick="openTest(${a.testId}, ${a.id})">Пройти тест →</button>`;
+            } else {
+                actionHtml = `<span class="muted">Нет теста</span>`;
+            }
 
-                    <div>
-                        ${a.completed
-            ? `<span class="st-badge-done">✔ выполнено</span>`
-            : a.expired
-                ? `<span style="color:red">истёк срок</span>`
-                : a.testId
-                    ? `<button class="st-action-btn" onclick="openTest(${a.testId})">Пройти</button>`
-                    : `<span>нет теста</span>`
-        }
-                    </div>
+            const testStr = a.testTitle && a.testTitle !== '-' ? `Тест: ${escapeHtml(a.testTitle)} · ` : '';
+            return `
+            <div class="st-list-row">
+                <div class="st-dot ${done ? 'completed' : 'pending'}"></div>
+                <div class="st-row-body">
+                    <div class="st-row-title">${escapeHtml(a.title)}</div>
+                    <div class="st-row-sub">${a.description ? escapeHtml(a.description) + ' · ' : ''}${testStr}Срок: ${formatDate(a.deadline)}</div>
                 </div>
-            `).join('')}
-        </div>
-    `;
+                <div class="st-row-right">${actionHtml}</div>
+            </div>`;
+        }).join('');
+
+        document.getElementById('stList').innerHTML = `<div class="st-list">${rows}</div>`;
     }
 
-    /* ================= TEST ================= */
+    // ===== Test =====
+    async function openTest(testId, assignmentId) {
+        const test = await apiGet(`/tests/${testId}`);
+        window.currentTest = test;
+        window.currentAssignmentId = assignmentId;
 
-    async function openTest(testId) {
-        const res = await apiGet(`/tests/${testId}`);
-        currentTest = res;
+        let html = `
+        <div class="st-test-hdr">
+            <h2>${escapeHtml(test.title)}</h2>
+            <button class="st-close-btn" onclick="closeTest()">✕</button>
+        </div>`;
 
-        let html = `<h2>${escapeHtml(res.title)}</h2>`;
-
-        res.questions.forEach(q => {
-            html += `<div>
-            <p><b>${escapeHtml(q.questionText)}</b></p>`;
-
+        test.questions.forEach((q, i) => {
+            html += `
+            <div class="st-question-block">
+                <div class="st-q-label">Вопрос ${i + 1}</div>
+                <div class="st-q-text">${escapeHtml(q.questionText)}</div>`;
             q.answers.forEach(a => {
                 html += `
                 <label class="st-answer-label">
                     <input type="radio" name="q_${q.id}" value="${a.id}">
-                    ${escapeHtml(a.answerText)}
+                    <span>${a.label}. ${escapeHtml(a.answerText)}</span>
                 </label>`;
             });
-
             html += `</div>`;
         });
 
-        html += `<button onclick="submitTest(${testId})">Сдать</button>`;
+        html += `
+        <div class="st-test-actions">
+            <button class="st-cancel-btn" onclick="closeTest()">Отмена</button>
+            <button class="st-submit-btn" onclick="submitTest(${testId}, ${assignmentId})">Сдать тест</button>
+        </div>`;
 
         document.getElementById('testCard').innerHTML = html;
         document.getElementById('testOverlay').classList.add('open');
@@ -249,33 +346,45 @@
         document.getElementById('testOverlay').classList.remove('open');
     }
 
-    async function submitTest(testId) {
+    async function submitTest(testId, assignmentId) {
+        const test = window.currentTest;
         const answers = [];
 
-        for (const q of currentTest.questions) {
+        for (const q of test.questions) {
             const sel = document.querySelector(`input[name="q_${q.id}"]:checked`);
-            if (!sel) return alert('Ответьте на все вопросы');
-
-            answers.push({
-                questionId: q.id,
-                selectedAnswerId: Number(sel.value)
-            });
+            if (!sel) { alert('Ответьте на все вопросы'); return; }
+            answers.push({ questionId: q.id, selectedAnswerId: Number(sel.value) });
         }
 
         const result = await apiPost(`/tests/${testId}/submit`, { answers });
-
         if (!result.ok) {
-            alert(result.data || "Ошибка");
+            alert(result.data || "Не удалось отправить тест — возможно срок истёк");
             return;
         }
 
         const r = result.data;
+        const pct = r.totalPoints > 0 ? Math.round((r.score / r.totalPoints) * 100) : 0;
 
         document.getElementById('testCard').innerHTML = `
-        <h2>Результат</h2>
-        <p>${r.score}/${r.totalPoints}</p>
-        <button onclick="finishTest()">Закрыть</button>
-    `;
+        <div class="st-result-hero">
+            <div class="st-result-circle">${r.score}/${r.totalPoints}</div>
+            <div class="st-result-title">${escapeHtml(r.testTitle)}</div>
+            <p class="st-result-sub">${pct}% правильных · ${r.incorrectCount} ошибок</p>
+        </div>
+        <div style="margin-top:20px">
+            ${r.details.map(d => `
+                <div class="st-detail-row">
+                    <div>
+                        <div class="st-detail-q">${escapeHtml(d.questionText)}</div>
+                        <div class="st-detail-a">Ваш: ${escapeHtml(d.selectedAnswer)}${!d.correct ? ' · Верно: ' + escapeHtml(d.correctAnswer) : ''}</div>
+                    </div>
+                    <span class="st-ans-badge ${d.correct ? 'correct' : 'wrong'}">${d.correct ? '✓ Верно' : '✗ Неверно'}</span>
+                </div>
+            `).join('')}
+        </div>
+        <div class="st-test-actions">
+            <button class="st-submit-btn" onclick="finishTest()">Готово</button>
+        </div>`;
     }
 
     async function finishTest() {
@@ -284,6 +393,5 @@
         renderList();
     }
 </script>
-
 </body>
 </html>
