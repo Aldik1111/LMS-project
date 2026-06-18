@@ -3,9 +3,11 @@ package com.example.lms.backend.presentation.controller;
 
 import com.example.lms.backend.application.dto.TestResultDto;
 import com.example.lms.backend.application.service.StatisticsService;
+import com.example.lms.backend.domain.entity.ProctoringViolation;
 import com.example.lms.backend.domain.entity.Student;
 import com.example.lms.backend.domain.entity.User;
 import com.example.lms.backend.infrastructure.security.SecurityUtils;
+import com.example.lms.backend.domain.repository.ProctoringViolationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +23,8 @@ import java.util.List;
 public class StatisticsController {
     private final StatisticsService statisticsService;
     private final SecurityUtils securityUtils;
+    private final ProctoringViolationRepository violationRepository;
+
 
     @GetMapping("test/{testId}")
     public ResponseEntity<List<TestResultDto>> getResultByTest(@PathVariable Long testId){
@@ -49,5 +53,10 @@ public class StatisticsController {
     public ResponseEntity<List<TestResultDto>> getMyResults(){
         User currentUser = securityUtils.getCurrentUser();
         return ResponseEntity.ok(statisticsService.getResultsByStudent(currentUser.getId()));
+    }
+
+    @GetMapping("/violations/test/{testId}")
+    public ResponseEntity<List<ProctoringViolation>> getViolationsByTest(@PathVariable Long testId) {
+        return ResponseEntity.ok(violationRepository.findAllByTestId(testId));
     }
 }

@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    const FACE_API_MODELS_URL = "https://justadudewhohacks.github.io/face-api.js/models";
     <title>LMS</title>
     <link rel="stylesheet" href="style.css">
     <style>
@@ -306,8 +308,21 @@
     }
 
     // ===== Test =====
+
+    let faceCheckInterval = null;
+    let noFaceCount = 0;
+    let videoStream = null;
+
     async function openTest(testId, assignmentId) {
         const test = await apiGet(`/tests/${testId}`);
+        const status = await apiGet("/proctoring/status")
+
+        if (!status.hasReferencePhoto) {
+            await capturePhotoFlow(testId);
+        } else {
+            await startTestFlow(testId);
+        }
+
         window.currentTest = test;
         window.currentAssignmentId = assignmentId;
 
@@ -347,6 +362,7 @@
     }
 
     async function submitTest(testId, assignmentId) {
+        stopProctoring();
         const test = window.currentTest;
         const answers = [];
 
@@ -392,6 +408,134 @@
         allAssignments = await apiGet('/assignments');
         renderList();
     }
+
+    // Захват референсного фото перед первым тестом
+    async function capturePhotoFlow(testId) {
+        document.getElementById("testArea").innerHTML = `
+        <div class="card">
+            <h2>Подготовка к тесту</h2>
+            <p class="muted">Перед началом нужно сделать фото для системы прокторинга.</p>
+            <video id="setupVideo" autoplay muted style="width:100%; max-width:400px; border-radius:8px;"></video>
+            <br><br>
+            <button onclick="takeReferencePhoto(${testId})">Сделать фото</button>
+        </div>
+    `;
+
+        videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        document.getElementById("setupVideo").srcObject = videoStream;
+    }
+
+    async function takeReferencePhoto(testId) {
+        const video = document.getElementById("setupVideo");
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext("2d").drawImage(video, 0, 0);
+
+        const photoBase64 = canvas.toDataURL("image/jpeg", 0.7);
+
+        await apiPost("/proctoring/photo", { photoBase64 });
+
+        // Останавливаем камеру настройки, переходим к тесту
+        videoStream.getTracks().forEach(track => track.stop());
+
+        await startTestFlow(testId);
+    }
+
+    // Основной поток теста с прокторингом
+    async function startTestFlow(testId) {
+        const test = await apiGet(`/tests/${testId}`);
+        window.currentTest = test;
+
+        let html = `
+        <div class="card">
+            <div style="display:flex; gap:16px; align-items:flex-start;">
+                <video id="proctorVideo" autoplay muted style="width:160px; border-radius:8px;"></video>
+                <div style="flex:1;">
+                    <h2>${escapeHtml(test.title)}</h2>
+                    <p class="muted" id="proctorStatus">Запуск камеры…</p>
+                </div>
+            </div>
+        </div>
+    `;
+
+        test.questions.forEach(q => {
+            html += `<div class="question-block"><p><b>${escapeHtml(q.questionText)}</b></p>`;
+            q.answers.forEach(a => {
+                html += `
+                <label class="answer-row">
+                    <input type="radio" name="q_${q.id}" value="${a.id}">
+                    <span>${a.label}. ${escapeHtml(a.answerText)}</span>
+                </label>`;
+            });
+            html += `</div>`;
+        });
+
+        html += `<button onclick="submitTest(${testId})">Сдать тест</button>`;
+
+        document.getElementById("testArea").innerHTML = html;
+
+        await startProctoring(testId);
+    }
+
+    // Запуск камеры + периодическая детекция лица
+    async function startProctoring(testId) {
+        try {
+            await faceapi.nets.tinyFaceDetector.loadFromUri(FACE_API_MODELS_URL);
+
+            videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+            const video = document.getElementById("proctorVideo");
+            video.srcObject = videoStream;
+
+            document.getElementById("proctorStatus").textContent = "Прокторинг активен";
+
+            noFaceCount = 0;
+
+            faceCheckInterval = setInterval(async () => {
+                const detection = await faceapi.detectSingleFace(
+                    video,
+                    new faceapi.TinyFaceDetectorOptions()
+                );
+
+                const statusEl = document.getElementById("proctorStatus");
+                if (!statusEl) { stopProctoring(); return; } // тест уже завершён, страница сменилась
+
+                if (detection) {
+                    noFaceCount = 0;
+                    statusEl.textContent = "Прокторинг активен";
+                    statusEl.style.color = "";
+                } else {
+                    noFaceCount++;
+                    statusEl.textContent = "Лицо не обнаружено в кадре";
+                    statusEl.style.color = "#dc2626";
+
+                    // Логируем нарушение раз в первое срабатывание, не на каждый тик
+                    if (noFaceCount === 1) {
+                        apiPost("/proctoring/violation", {
+                            testId: testId,
+                            violationType: "NO_FACE_DETECTED"
+                        }).catch(() => {}); // не критично, тест не должен прерваться из-за этого
+                    }
+                }
+            }, 5000); // проверка каждые 5 секунд
+
+        } catch (err) {
+            console.error("Не удалось запустить прокторинг:", err);
+            document.getElementById("proctorStatus").textContent = "Камера недоступна — прокторинг отключён";
+        }
+    }
+
+    function stopProctoring() {
+        if (faceCheckInterval) {
+            clearInterval(faceCheckInterval);
+            faceCheckInterval = null;
+        }
+        if (videoStream) {
+            videoStream.getTracks().forEach(track => track.stop());
+            videoStream = null;
+        }
+    }
+
 </script>
 </body>
 </html>

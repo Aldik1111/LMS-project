@@ -356,7 +356,7 @@
             answers.push({ questionId: q.id, selectedAnswerId: Number(sel.value) });
         }
 
-        const result = await apiPost(`/tests/${testId}/submit`, { answers });
+        const result = await apiPost(`/tests/${testId}/submit`, { testId, assignmentId, answers });
         if (!result.ok) {
             alert(result.data || "Не удалось отправить тест — возможно срок истёк");
             return;
@@ -369,7 +369,7 @@
         <div class="st-result-hero">
             <div class="st-result-circle">${r.score}/${r.totalPoints}</div>
             <div class="st-result-title">${escapeHtml(r.testTitle)}</div>
-            <p class="st-result-sub">${pct}% правильных · ${r.incorrectCount} ошибок</p>
+            <p class="st-result-sub">${pct}% правильных · ${r.incorrectAnswers} ошибок</p>
         </div>
         <div style="margin-top:20px">
             ${r.details.map(d => `
