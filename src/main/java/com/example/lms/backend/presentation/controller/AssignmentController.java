@@ -41,19 +41,10 @@ public class AssignmentController {
             AssignmentDto created = assignmentService.createAssignment(dto, currentUser.getId());
             return ResponseEntity.status(201).body(created);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().build();
         }
     }
 
-    // PUT /api/assignments/{id}/complete
-    @PutMapping("/{id}/complete")
-    public ResponseEntity<AssignmentDto> completeAssignment(@PathVariable Long id) {
-        try {
-            return ResponseEntity.ok(assignmentService.completeAssignment(id));
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
 
     // DELETE /api/assignments/{id}
     @DeleteMapping("/{id}")

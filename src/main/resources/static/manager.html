@@ -397,10 +397,20 @@
                 <div class="form-panel-body" id="testForm">
                     <input type="text" id="testTitle" placeholder="Название теста">
                     <input type="text" id="testDescription" placeholder="Описание (необязательно)">
+
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 8px">
+                        <span style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em">
+                            Вопросы · <span id="qCount">0</span>
+                        </span>
+                        <button class="secondary" style="font-size:13px;padding:6px 13px;display:flex;align-items:center;gap:6px" onclick="addQuestion()">
+                            ＋ Добавить вопрос
+                        </button>
+                    </div>
+
                     <div id="questions"></div>
-                    <div class="btn-group" style="margin-top:8px">
-                        <button class="secondary" onclick="addQuestion()">+ Добавить вопрос</button>
-                        <button onclick="createTest()">Сохранить тест</button>
+
+                    <div style="margin-top:12px">
+                        <button class="full" onclick="createTest()">Сохранить тест</button>
                     </div>
                     <div id="testError" class="error-text"></div>
                 </div>
@@ -495,8 +505,23 @@
 
     // ===== QUESTIONS =====
     let questionCount = 0;
+    const ANS_LETTERS = 'ABCDEFGH'.split('');
 
     addQuestion();
+
+    function updateQCount() {
+        document.getElementById('qCount').textContent =
+            document.querySelectorAll('.question-block').length;
+    }
+
+    function makeAnswerHtml(qi, label) {
+        return `<label class="answer-row" id="ans_${qi}_${label}" style="display:flex;align-items:center;gap:8px;position:relative">
+            <input type="radio" name="correct_${qi}" value="${label}">
+            <span style="font-weight:700;min-width:18px;color:var(--accent);flex-shrink:0">${label}</span>
+            <input type="text" placeholder="Вариант ${label}" class="a-text" data-label="${label}" style="flex:1;margin:0">
+            <button type="button" onclick="removeAnswer(${qi},'${label}')" style="background:none;border:none;cursor:pointer;color:var(--text-faint);font-size:16px;padding:2px 7px;border-radius:5px;flex-shrink:0;transition:color .15s" onmouseover="this.style.color='#f87171'" onmouseout="this.style.color=''" title="Удалить вариант">✕</button>
+        </label>`;
+    }
 
     function addQuestion() {
         questionCount++;
@@ -505,21 +530,53 @@
         div.className = 'question-block';
         div.id = `question_${i}`;
         div.innerHTML = `
-        <div class="row" style="border-bottom:none;padding-top:0">
-            <b>Вопрос ${i}</b>
-            <button class="danger" onclick="removeQuestion(${i})">Удалить</button>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <span style="font-size:13px;font-weight:600;color:var(--accent)">Вопрос ${i}</span>
+            <button class="danger" style="padding:4px 11px;font-size:12px" onclick="removeQuestion(${i})">✕ Удалить</button>
         </div>
         <input type="text" placeholder="Текст вопроса" class="q-text">
-        ${['A','B','C','D'].map(l => `
-            <label class="answer-row">
-                <input type="radio" name="correct_${i}" value="${l}">
-                <span>${l}</span>
-                <input type="text" placeholder="Вариант ${l}" class="a-text" data-label="${l}">
-            </label>`).join('')}`;
+        <div class="answers-container" id="answers_${i}">
+            ${makeAnswerHtml(i, 'A')}
+            ${makeAnswerHtml(i, 'B')}
+        </div>
+        <button type="button" class="secondary" style="font-size:12px;padding:5px 11px;margin-top:8px" onclick="addAnswer(${i})">＋ Ещё вариант</button>`;
         document.getElementById('questions').appendChild(div);
+        updateQCount();
     }
 
-    function removeQuestion(i) { document.getElementById(`question_${i}`)?.remove(); }
+    function removeQuestion(i) {
+        const el = document.getElementById(`question_${i}`);
+        if (el) { el.remove(); updateQCount(); }
+    }
+
+    function addAnswer(qi) {
+        const container = document.getElementById(`answers_${qi}`);
+        const count = container.querySelectorAll('.answer-row').length;
+        if (count >= 6) return;
+        container.insertAdjacentHTML('beforeend', makeAnswerHtml(qi, ANS_LETTERS[count]));
+    }
+
+    function removeAnswer(qi, label) {
+        const container = document.getElementById(`answers_${qi}`);
+        if (container.querySelectorAll('.answer-row').length <= 2) return;
+        const row = document.getElementById(`ans_${qi}_${label}`);
+        if (row) row.remove();
+        renumberAnswers(qi);
+    }
+
+    function renumberAnswers(qi) {
+        const container = document.getElementById(`answers_${qi}`);
+        container.querySelectorAll('.answer-row').forEach((row, idx) => {
+            const newLabel = ANS_LETTERS[idx];
+            row.id = `ans_${qi}_${newLabel}`;
+            row.querySelector('input[type=radio]').value = newLabel;
+            row.querySelector('span').textContent = newLabel;
+            const inp = row.querySelector('.a-text');
+            inp.dataset.label = newLabel;
+            inp.placeholder = `Вариант ${newLabel}`;
+            row.querySelector('button[type=button]').setAttribute('onclick', `removeAnswer(${qi},'${newLabel}')`);
+        });
+    }
 
     // ===== CREATE TEST =====
     async function createTest() {
@@ -561,6 +618,7 @@
         document.getElementById('questions').innerHTML = '';
         questionCount = 0;
         addQuestion();
+        updateQCount();
         toggleForm('testForm');
 
         loadTests();
@@ -653,7 +711,7 @@
             deadline: deadline + ":00"
         });
 
-        if (!result.ok) { errorEl.textContent = "Ошибка: " + result.text; return; }
+        if (!result.ok) {errorEl.textContent = "Ошибка: " + result.text; return; }
 
         document.getElementById("assignTitle").value = "";
         document.getElementById("assignDescription").value = "";
@@ -730,7 +788,7 @@
                     ${results.map(r => `<tr>
                         <td>${escapeHtml(r.studentName)}</td>
                         <td>${r.score} / ${r.totalPoints}</td>
-                        <td>${r.incorrectCount}</td>
+                        <td>${r.incorrectAnswers}</td>
                         <td>${formatDate(r.completedAt)}</td>
                     </tr>`).join('')}
                 </tbody>

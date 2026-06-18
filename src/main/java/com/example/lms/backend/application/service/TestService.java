@@ -119,13 +119,22 @@ public class TestService {
             List<Assignment> forThisTest = groupAssignments.stream()
                     .filter(a -> a.getTest() != null && a.getTest().getId().equals(request.getTestId()))
                     .collect(Collectors.toList());
-            // Block only when every assignment for this test has expired
+
+            if (forThisTest.isEmpty()) {
+                throw new RuntimeException("Этот тест не назначен вашей группе");
+            }
+
             boolean hasActive = forThisTest.stream()
                     .anyMatch(a -> a.getDeadline() == null || !a.getDeadline().isBefore(now));
-            if (!forThisTest.isEmpty() && !hasActive) {
+            if (!hasActive) {
                 throw new RuntimeException("Deadline time is out");
             }
         }
+
+        if (testResultRepository.existsByStudentIdAndTestId(studentId, request.getTestId())) {
+            throw new RuntimeException("You arleady complete test");
+        }
+
 
         // Догружаем ответы отдельным запросом
         List<Question> questionsWithAnswers = questionRepository.findByTestIdWithAnswers(request.getTestId());
@@ -138,7 +147,7 @@ public class TestService {
                 .student(studentUser)
                 .test(test)
                 .score(0)
-                .totalPoints(test.getQuestions().size())
+                .totalPoints(questionsWithAnswers.size())
                 .build();
 
         TestResult savedResult = testResultRepository.save(result);
@@ -206,8 +215,8 @@ public class TestService {
                 test.getTitle(),
                 studentUser.getFullName(),
                 correctCount,
-                test.getQuestions().size(),
-                test.getQuestions().size() - correctCount,
+                questionsWithAnswers.size(),
+                questionsWithAnswers.size() - correctCount,
                 savedResult.getCompletedAt(),
                 details
         );
