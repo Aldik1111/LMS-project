@@ -238,13 +238,7 @@
     async function initStudent() {
         showListLoading();
         try {
-            const raw = await apiGet('/assignments');
-            const now = new Date();
-            allAssignments = raw.map(a => ({
-                ...a,
-                completed: a.status === 'COMPLETED',
-                expired: a.status !== 'COMPLETED' && a.deadline && new Date(a.deadline) < now
-            }));
+            allAssignments = await apiGet('/assignments');
             renderList();
         } catch (e) {
             document.getElementById('stList').innerHTML =
@@ -395,13 +389,7 @@
 
     async function finishTest() {
         closeTest();
-        const raw = await apiGet('/assignments');
-        const now = new Date();
-        allAssignments = raw.map(a => ({
-            ...a,
-            completed: a.status === 'COMPLETED',
-            expired: a.status !== 'COMPLETED' && a.deadline && new Date(a.deadline) < now
-        }));
+        allAssignments = await apiGet('/assignments');
         renderList();
     }
 </script>
