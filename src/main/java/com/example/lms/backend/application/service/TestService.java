@@ -199,11 +199,15 @@ public class TestService {
         savedResult.setScore(correctCount);
         testResultRepository.save(savedResult);
 
-        // Завершить все задания группы с этим тестом — один сабмит покрывает все
+        // Завершить все активные (не просроченные) задания группы с этим тестом
         if (student.getGroupNumber() != null) {
+            java.time.LocalDateTime now2 = java.time.LocalDateTime.now();
             assignmentRepository.findAllByTargetGroup(student.getGroupNumber()).stream()
                     .filter(a -> a.getTest() != null && a.getTest().getId().equals(test.getId()))
+                    .filter(a -> a.getStatus() == AssignmentStatus.PENDING)
+                    .filter(a -> a.getDeadline() == null || !a.getDeadline().isBefore(now2))
                     .forEach(a -> {
+                        a.setStatus(AssignmentStatus.COMPLETED);
                         assignmentRepository.save(a);
                     });
         }
