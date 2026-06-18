@@ -37,19 +37,15 @@ public class AssignmentService {
     @Transactional(readOnly = true)
     public List<AssignmentDto> getAssignmentsForGroup(String group, Long studentId){ // For students
         List<Assignment> assignments = assignmentRepository.findAllByTargetGroup(group);
-        List<TestResult> results = testResultRepository.findAllByStudentId(studentId);
 
         return assignments.stream().map(a -> {
             AssignmentDto dto = toDto(a, studentId);
-
-            if (a.getTest() != null) {
-                results.stream()
-                    .filter(r -> r.getTest().getId().equals(a.getTest().getId()))
-                    .findFirst()
-                    .ifPresent(r -> {
-                        dto.setScore(r.getScore());
-                        dto.setTotalPoints(r.getTotalPoints());
-                    });
+            if (Boolean.TRUE.equals(dto.getCompleted())) {
+                testResultRepository.findByStudentIdAndAssignmentId(studentId, a.getId())
+                        .ifPresent(r -> {
+                            dto.setScore(r.getScore());
+                            dto.setTotalPoints(r.getTotalPoints());
+                        });
             }
             return dto;
         }).collect(Collectors.toList());
@@ -91,13 +87,12 @@ public class AssignmentService {
     }
 
     private AssignmentDto toDto(Assignment a, Long studentId) {
+        boolean expired = a.getDeadline() != null && a.getDeadline().isBefore(LocalDateTime.now());
         boolean completed = false;
 
-        if (studentId != null && a.getTest() != null) {
-            completed = testResultRepository.existsByStudentIdAndTestId(studentId, a.getTest().getId());
+        if (!expired && studentId != null) {
+            completed = testResultRepository.existsByStudentIdAndAssignmentId(studentId, a.getId());
         }
-
-        boolean expired = a.getDeadline() != null && a.getDeadline().isBefore(LocalDateTime.now());
 
         return new AssignmentDto(
                 a.getId(),

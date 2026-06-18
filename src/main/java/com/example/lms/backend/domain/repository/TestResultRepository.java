@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface TestResultRepository extends JpaRepository<TestResult,Long> {
@@ -15,6 +16,10 @@ public interface TestResultRepository extends JpaRepository<TestResult,Long> {
     List<TestResult> findAllByStudentId (Long studentId);
 
     boolean existsByStudentIdAndTestId (Long studentId, Long testId);
+
+    boolean existsByStudentIdAndAssignmentId (Long studentId, Long assignmentId);
+
+    Optional<TestResult> findByStudentIdAndAssignmentId (Long studentId, Long assignmentId);
 
     @Query("SELECT AVG(tr.score) FROM TestResult tr WHERE tr.test.id = :testId")
     Double findAverageScoreByTestId (@Param("testId") Long testId);

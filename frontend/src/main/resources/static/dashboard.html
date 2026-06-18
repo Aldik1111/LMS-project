@@ -356,7 +356,7 @@
             answers.push({ questionId: q.id, selectedAnswerId: Number(sel.value) });
         }
 
-        const result = await apiPost(`/tests/${testId}/submit`, { answers });
+        const result = await apiPost(`/tests/${testId}/submit`, { testId, assignmentId, answers });
         if (!result.ok) {
             alert(result.data || "Не удалось отправить тест — возможно срок истёк");
             return;

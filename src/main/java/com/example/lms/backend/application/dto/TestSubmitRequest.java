@@ -9,6 +9,7 @@ import java.util.List;
 
 public class TestSubmitRequest {
     private Long testId;
+    private Long assignmentId;
     private List<StudentAnswerDto> answers;
 
     @Data

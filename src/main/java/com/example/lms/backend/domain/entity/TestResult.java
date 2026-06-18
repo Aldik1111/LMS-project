@@ -26,6 +26,10 @@ public class TestResult {
     @JoinColumn(name = "test_id")
     private Test test;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assignment_id")
+    private Assignment assignment;
+
     @Column(nullable = false)
     private LocalDateTime completedAt;
 

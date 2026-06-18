@@ -112,27 +112,18 @@ public class TestService {
             throw new RuntimeException("Only student can complete tests");
         }
 
-        // Проверка дедлайна
-        if (student.getGroupNumber() != null) {
-            java.time.LocalDateTime now = java.time.LocalDateTime.now();
-            List<Assignment> groupAssignments = assignmentRepository.findAllByTargetGroup(student.getGroupNumber());
-            List<Assignment> forThisTest = groupAssignments.stream()
-                    .filter(a -> a.getTest() != null && a.getTest().getId().equals(request.getTestId()))
-                    .collect(Collectors.toList());
-
-            if (forThisTest.isEmpty()) {
-                throw new RuntimeException("Этот тест не назначен вашей группе");
-            }
-
-            boolean hasActive = forThisTest.stream()
-                    .anyMatch(a -> a.getDeadline() == null || !a.getDeadline().isBefore(now));
-            if (!hasActive) {
+        // Проверка дедлайна и дубликата по конкретному заданию
+        Assignment targetAssignment = null;
+        if (request.getAssignmentId() != null) {
+            targetAssignment = assignmentRepository.findById(request.getAssignmentId())
+                    .orElseThrow(() -> new RuntimeException("Assignment not found"));
+            if (targetAssignment.getDeadline() != null
+                    && targetAssignment.getDeadline().isBefore(java.time.LocalDateTime.now())) {
                 throw new RuntimeException("Deadline time is out");
             }
-        }
-
-        if (testResultRepository.existsByStudentIdAndTestId(studentId, request.getTestId())) {
-            throw new RuntimeException("You arleady complete test");
+            if (testResultRepository.existsByStudentIdAndAssignmentId(studentId, request.getAssignmentId())) {
+                throw new RuntimeException("You arleady complete test");
+            }
         }
 
 
@@ -146,6 +137,7 @@ public class TestService {
         TestResult result = TestResult.builder()
                 .student(studentUser)
                 .test(test)
+                .assignment(targetAssignment)
                 .score(0)
                 .totalPoints(questionsWithAnswers.size())
                 .build();
