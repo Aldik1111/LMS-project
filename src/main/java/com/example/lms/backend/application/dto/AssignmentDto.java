@@ -1,6 +1,5 @@
 package com.example.lms.backend.application.dto;
 
-import com.example.lms.backend.domain.entity.AssignmentStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,9 +19,10 @@ public class AssignmentDto {
     private String targetGroup;
     private Long testId;
     private String TestTitle;
-    private AssignmentStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime deadline;
     private Integer score;
     private Integer totalPoints;
+    private Boolean completed;
+    private Boolean expired;
 }

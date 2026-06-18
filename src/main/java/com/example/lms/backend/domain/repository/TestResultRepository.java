@@ -1,6 +1,5 @@
 package com.example.lms.backend.domain.repository;
 
-import com.example.lms.backend.domain.entity.AssignmentStatus;
 import com.example.lms.backend.domain.entity.TestResult;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

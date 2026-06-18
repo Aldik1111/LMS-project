@@ -2,7 +2,6 @@ package com.example.lms.backend.application.service;
 
 import com.example.lms.backend.application.dto.AssignmentDto;
 import com.example.lms.backend.domain.entity.Assignment;
-import com.example.lms.backend.domain.entity.AssignmentStatus;
 import com.example.lms.backend.domain.entity.Test;
 import com.example.lms.backend.domain.entity.TestResult;
 import com.example.lms.backend.domain.entity.User;
@@ -14,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,7 +30,7 @@ public class AssignmentService {
     public List<AssignmentDto> getAllAssignments() { // For manager
         return assignmentRepository.findAll()
                 .stream()
-                .map(this::toDto)
+                .map(a -> toDto(a,null))
                 .collect(Collectors.toList());
     }
 
@@ -38,8 +38,10 @@ public class AssignmentService {
     public List<AssignmentDto> getAssignmentsForGroup(String group, Long studentId){ // For students
         List<Assignment> assignments = assignmentRepository.findAllByTargetGroup(group);
         List<TestResult> results = testResultRepository.findAllByStudentId(studentId);
+
         return assignments.stream().map(a -> {
-            AssignmentDto dto = toDto(a);
+            AssignmentDto dto = toDto(a, studentId);
+
             if (a.getTest() != null) {
                 results.stream()
                     .filter(r -> r.getTest().getId().equals(a.getTest().getId()))
@@ -75,20 +77,10 @@ public class AssignmentService {
                 .test(test)
                 .assignedBy(creator)
                 .deadline(dto.getDeadline())
-                .status(AssignmentStatus.PENDING)
                 .build();
 
         Assignment saved =  assignmentRepository.save(assignment);
-        return toDto(saved);
-    }
-
-    public AssignmentDto completeAssignment(Long assignmentId){
-        Assignment assignment = assignmentRepository.findById(assignmentId)
-                .orElseThrow(() -> new RuntimeException("Assignment not found"));
-
-        assignment.setStatus(AssignmentStatus.COMPLETED);
-        Assignment saved = assignmentRepository.save(assignment);
-        return toDto(saved);
+        return toDto(saved, null);
     }
 
     public void deleteAssignment(Long id) {
@@ -98,7 +90,15 @@ public class AssignmentService {
         assignmentRepository.deleteById(id);
     }
 
-    private AssignmentDto toDto(Assignment a) {
+    private AssignmentDto toDto(Assignment a, Long studentId) {
+        boolean completed = false;
+
+        if (studentId != null && a.getTest() != null) {
+            completed = testResultRepository.existsByStudentIdAndTestId(studentId, a.getTest().getId());
+        }
+
+        boolean expired = a.getDeadline() != null && a.getDeadline().isBefore(LocalDateTime.now());
+
         return new AssignmentDto(
                 a.getId(),
                 a.getTitle(),
@@ -106,11 +106,12 @@ public class AssignmentService {
                 a.getTargetGroup(),
                 a.getTest() != null ? a.getTest().getId() : null,
                 a.getTest() != null ? a.getTest().getTitle() : "-",
-                a.getStatus(),
                 a.getCreatedAt(),
                 a.getDeadline(),
                 null,
-                null
+                null,
+                completed,
+                expired
         );
     }
 

@@ -39,10 +39,6 @@ public class Assignment {
     @Column(nullable = false)
     private LocalDateTime deadline;
 
-    @Enumerated(EnumType.STRING)
-    @Builder.Default
-    private AssignmentStatus status = AssignmentStatus.PENDING;
-
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();

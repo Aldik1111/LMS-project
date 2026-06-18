@@ -113,16 +113,33 @@ public class TestService {
         }
 
         // Проверка дедлайна
-        List<Assignment> studentAssignments = assignmentRepository.findAllByTargetGroup(student.getGroupNumber());
-        Assignment relatedAssignment = studentAssignments.stream()
+        List<Assignment> groupAssignments = assignmentRepository.findAllByTargetGroup(student.getGroupNumber());
+        Assignment relatedAssignment = groupAssignments.stream()
                 .filter(a -> a.getTest() != null && a.getTest().getId().equals(request.getTestId()))
                 .findFirst()
                 .orElse(null);
-        if (relatedAssignment != null
-            && relatedAssignment.getDeadline() != null
-            && relatedAssignment.getDeadline().isBefore(java.time.LocalDateTime.now())) {
-            throw new RuntimeException("Deadline time is out: " + relatedAssignment.getDeadline());
+
+        if (relatedAssignment == null) {
+            throw new RuntimeException("Этот тест не назначен вашей группе");
         }
+
+        if (student.getGroupNumber() != null) {
+            java.time.LocalDateTime now = java.time.LocalDateTime.now();
+            List<Assignment> forThisTest = groupAssignments.stream()
+                    .filter(a -> a.getTest() != null && a.getTest().getId().equals(request.getTestId()))
+                    .collect(Collectors.toList());
+            // Block only when every assignment for this test has expired
+            boolean hasActive = forThisTest.stream()
+                    .anyMatch(a -> a.getDeadline() == null || !a.getDeadline().isBefore(now));
+            if (!forThisTest.isEmpty() && !hasActive) {
+                throw new RuntimeException("Deadline time is out");
+            }
+        }
+
+        if (testResultRepository.existsByStudentIdAndTestId(studentId, request.getTestId())) {
+            throw new RuntimeException("You arleady complete test");
+        }
+
 
         // Догружаем ответы отдельным запросом
         List<Question> questionsWithAnswers = questionRepository.findByTestIdWithAnswers(request.getTestId());
@@ -135,7 +152,7 @@ public class TestService {
                 .student(studentUser)
                 .test(test)
                 .score(0)
-                .totalPoints(test.getQuestions().size())
+                .totalPoints(questionsWithAnswers.size())
                 .build();
 
         TestResult savedResult = testResultRepository.save(result);
@@ -192,8 +209,8 @@ public class TestService {
                 test.getTitle(),
                 studentUser.getFullName(),
                 correctCount,
-                test.getQuestions().size(),
-                test.getQuestions().size() - correctCount,
+                questionsWithAnswers.size(),
+                questionsWithAnswers.size() - correctCount,
                 savedResult.getCompletedAt(),
                 details
         );

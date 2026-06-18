@@ -2,158 +2,287 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LMS</title>
     <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* ===== Student layout ===== */
+        #studentLayout { display: none; height: 100vh; font-family: var(--font-body); background: var(--bg); overflow: hidden; }
+        #studentLayout.visible { display: flex; }
+
+        .st-sidebar {
+            width: 240px; min-width: 240px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex; flex-direction: column;
+        }
+
+        .st-logo { display: flex; align-items: center; gap: 10px; padding: 22px 20px; border-bottom: 1px solid var(--border); }
+        .st-logo-mark {
+            width: 36px; height: 36px; border-radius: 10px;
+            background: var(--accent);
+            color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800;
+        }
+
+        .st-nav { flex: 1; padding: 12px; }
+        .st-nav-btn {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            background: none;
+            text-align: left;
+            color: var(--text-muted);
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .st-nav-btn.active { background: var(--accent-soft); color: var(--accent); }
+
+        .st-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+        .st-header {
+            padding: 14px 24px;
+            display: flex; justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .st-content { padding: 24px; overflow-y: auto; }
+
+        .st-list { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+
+        .st-list-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .st-list-row:last-child { border-bottom: none; }
+
+        .st-row-title { font-weight: 600; }
+        .st-row-sub { font-size: 12px; color: var(--text-muted); }
+
+        .st-action-btn {
+            padding: 6px 14px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .st-badge-done {
+            font-size: 12px;
+            color: var(--success);
+        }
+
+        /* overlay */
+        #testOverlay {
+            position: fixed;
+            inset: 0;
+            display: none;
+            background: rgba(0,0,0,0.6);
+            align-items: center;
+            justify-content: center;
+        }
+
+        #testOverlay.open { display: flex; }
+
+        .st-test-card {
+            background: var(--surface);
+            padding: 24px;
+            border-radius: 12px;
+            width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .st-answer-label {
+            display: block;
+            margin: 6px 0;
+        }
+    </style>
 </head>
+
 <body>
 
-<div class="topbar">
-    <h1>LMS</h1>
-    <div class="topbar-right">
-        <span id="userInfo"></span>
-        <button class="secondary" onclick="logout()">Выйти</button>
+<!-- SIMPLE (ADMIN / MANAGER) -->
+<div id="simpleLayout" style="display:none">
+    <div class="topbar">
+        <h1>LMS</h1>
+        <button onclick="logout()">Выйти</button>
     </div>
+    <div id="simpleContent"></div>
 </div>
 
-<div class="container" id="content"></div>
+<!-- STUDENT -->
+<div id="studentLayout">
+    <aside class="st-sidebar">
+        <div class="st-logo">
+            <div class="st-logo-mark">L</div>
+            LMS
+        </div>
+
+        <nav class="st-nav">
+            <button class="st-nav-btn active">Мои задания</button>
+        </nav>
+
+        <div style="padding:12px">
+            <div id="stName">Студент</div>
+        </div>
+    </aside>
+
+    <main class="st-main">
+        <div class="st-header">
+            <div>Задания</div>
+        </div>
+
+        <div class="st-content">
+            <div id="stList"></div>
+        </div>
+    </main>
+</div>
+
+<!-- TEST -->
+<div id="testOverlay">
+    <div class="st-test-card" id="testCard"></div>
+</div>
 
 <script src="api.js"></script>
+
 <script>
     requireAuth();
 
     const role = getRole();
-    const name = getFullName();
-    const displayName = (name && name !== 'undefined' && name !== 'null') ? name : '';
-    document.getElementById("userInfo").textContent = displayName ? `${displayName} · ${role}` : role;
+    const name = getFullName() || 'Студент';
 
-    const content = document.getElementById("content");
+    document.getElementById('stName').innerText = name;
 
-    if (role === "ADMIN") {
-        content.innerHTML = `
-        <div class="card">
-            <h2>Администратор</h2>
-            <p class="muted">Управление пользователями и ролями.</p>
-            <button onclick="location.href='admin.html'">Открыть пользователей</button>
-        </div>`;
+    let allAssignments = [];
+    let currentTest = null;
+
+    if (role === 'STUDENT') {
+        document.getElementById('studentLayout').classList.add('visible');
+        initStudent();
+    } else {
+        document.getElementById('simpleLayout').style.display = 'block';
+        document.getElementById('simpleContent').innerHTML =
+            `<h2>${role}</h2>`;
     }
 
-    if (role === "MANAGER") {
-        content.innerHTML = `
-        <div class="card">
-            <h2>Менеджер</h2>
-            <p class="muted">Создание тестов, заданий и просмотр результатов.</p>
-            <button onclick="location.href='manager.html'">Открыть панель менеджера</button>
-        </div>`;
+    /* ================= STUDENT ================= */
+
+    async function initStudent() {
+        allAssignments = await apiGet('/assignments');
+        renderList();
     }
 
-    if (role === "STUDENT") {
-        content.innerHTML = `
-        <div class="card">
-            <h2>Мои задания</h2>
-            <div id="assignments" class="empty-state">Загрузка…</div>
-        </div>
-        <div id="testArea"></div>`;
-        loadStudentData();
-    }
+    function renderList() {
+        const list = document.getElementById('stList');
 
-    async function loadStudentData() {
-        try {
-            const assignments = await apiGet("/assignments");
-            const box = document.getElementById("assignments");
-
-            if (assignments.length === 0) { box.className = "empty-state"; box.textContent = "Заданий пока нет"; return; }
-
-            box.className = "";
-            box.innerHTML = assignments.map(a => `
-            <div class="row">
-                <div>
-                    <div><b>${escapeHtml(a.title)}</b></div>
-                    <div class="muted">${escapeHtml(a.description || "")}</div>
-                    <div class="muted">Тест: ${escapeHtml(a.testTitle || "-")} · Срок: ${formatDate(a.deadline)}</div>
-                </div>
-                <div>
-                    ${a.status === "COMPLETED"
-                        ? `<span class="badge success">Выполнено</span>`
-                        : a.testId
-                            ? `<button onclick="openTest(${a.testId}, ${a.id})">Пройти тест</button>`
-                            : `<button onclick="completeAssignment(${a.id})">Отметить выполненным</button>`}
-                </div>
-            </div>`).join("");
-                } catch (err) {
-            document.getElementById("assignments").textContent = "Ошибка: " + err.message;
+        if (!allAssignments.length) {
+            list.innerHTML = `<p>Нет заданий</p>`;
+            return;
         }
+
+        list.innerHTML = `
+        <div class="st-list">
+            ${allAssignments.map(a => `
+                <div class="st-list-row">
+                    <div>
+                        <div class="st-row-title">${escapeHtml(a.title)}</div>
+                        <div class="st-row-sub">
+                            ${escapeHtml(a.description || '')}
+                            · ${formatDate(a.deadline)}
+                        </div>
+                    </div>
+
+                    <div>
+                        ${a.completed
+            ? `<span class="st-badge-done">✔ выполнено</span>`
+            : a.expired
+                ? `<span style="color:red">истёк срок</span>`
+                : a.testId
+                    ? `<button class="st-action-btn" onclick="openTest(${a.testId})">Пройти</button>`
+                    : `<span>нет теста</span>`
+        }
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
     }
 
-    async function completeAssignment(id) {
-        await apiPut(`/assignments/${id}/complete`);
-        loadStudentData();
-    }
+    /* ================= TEST ================= */
 
-    async function openTest(testId, assignmentId) {
-        const test = await apiGet(`/tests/${testId}`);
-        window.currentTest = test;
+    async function openTest(testId) {
+        const res = await apiGet(`/tests/${testId}`);
+        currentTest = res;
 
-        let html = `<div class="card"><h2>${escapeHtml(test.title)}</h2>`;
+        let html = `<h2>${escapeHtml(res.title)}</h2>`;
 
-        test.questions.forEach(q => {
-            html += `<div class="question-block"><p><b>${escapeHtml(q.questionText)}</b></p>`;
+        res.questions.forEach(q => {
+            html += `<div>
+            <p><b>${escapeHtml(q.questionText)}</b></p>`;
+
             q.answers.forEach(a => {
                 html += `
-                <label class="answer-row">
+                <label class="st-answer-label">
                     <input type="radio" name="q_${q.id}" value="${a.id}">
-                    <span>${a.label}. ${escapeHtml(a.answerText)}</span>
+                    ${escapeHtml(a.answerText)}
                 </label>`;
             });
+
             html += `</div>`;
         });
 
-        html += `<button onclick="submitTest(${testId}, ${assignmentId})">Сдать тест</button></div>`;
+        html += `<button onclick="submitTest(${testId})">Сдать</button>`;
 
-        document.getElementById("testArea").innerHTML = html;
-        document.getElementById("assignments").parentElement.scrollIntoView({ behavior: "smooth" });
+        document.getElementById('testCard').innerHTML = html;
+        document.getElementById('testOverlay').classList.add('open');
     }
 
-    async function submitTest(testId, assignmentId) {
-        const test = window.currentTest;
+    function closeTest() {
+        document.getElementById('testOverlay').classList.remove('open');
+    }
+
+    async function submitTest(testId) {
         const answers = [];
 
-        for (const q of test.questions) {
-            const selected = document.querySelector(`input[name="q_${q.id}"]:checked`);
-            if (!selected) { alert("Ответьте на все вопросы"); return; }
-            answers.push({ questionId: q.id, selectedAnswerId: Number(selected.value) });
+        for (const q of currentTest.questions) {
+            const sel = document.querySelector(`input[name="q_${q.id}"]:checked`);
+            if (!sel) return alert('Ответьте на все вопросы');
+
+            answers.push({
+                questionId: q.id,
+                selectedAnswerId: Number(sel.value)
+            });
         }
 
         const result = await apiPost(`/tests/${testId}/submit`, { answers });
-        if (!result.ok) { alert("Ошибка отправки теста: " + result.text); return; }
+
+        if (!result.ok) {
+            alert(result.data || "Ошибка");
+            return;
+        }
 
         const r = result.data;
 
-        let html = `
-        <div class="card">
-            <h2>Результат: ${escapeHtml(r.testTitle)}</h2>
-            <p>Правильных ответов: <b>${r.score} / ${r.totalPoints}</b> · Неправильных: ${r.incorrectCount}</p>`;
-
-        r.details.forEach(d => {
-            html += `
-            <div class="row">
-                <div>
-                    <div>${escapeHtml(d.questionText)}</div>
-                    <div class="muted">Ваш ответ: ${escapeHtml(d.selectedAnswer)}${!d.correct ? " · Верно: " + escapeHtml(d.correctAnswer) : ""}</div>
-                </div>
-                <span class="badge ${d.correct ? "success" : "danger"}">${d.correct ? "Верно" : "Неверно"}</span>
-            </div>`;
-        });
-
-        html += `<button onclick="finishTest()" style="margin-top:12px;">Готово</button></div>`;
-        document.getElementById("testArea").innerHTML = html;
-
-        if (assignmentId) await apiPut(`/assignments/${assignmentId}/complete`);
+        document.getElementById('testCard').innerHTML = `
+        <h2>Результат</h2>
+        <p>${r.score}/${r.totalPoints}</p>
+        <button onclick="finishTest()">Закрыть</button>
+    `;
     }
 
-    function finishTest() {
-        document.getElementById("testArea").innerHTML = "";
-        loadStudentData();
+    async function finishTest() {
+        closeTest();
+        allAssignments = await apiGet('/assignments');
+        renderList();
     }
 </script>
+
 </body>
 </html>
