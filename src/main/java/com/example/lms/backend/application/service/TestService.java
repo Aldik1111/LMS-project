@@ -113,15 +113,18 @@ public class TestService {
         }
 
         // Проверка дедлайна
-        List<Assignment> studentAssignments = assignmentRepository.findAllByTargetGroup(student.getGroupNumber());
-        Assignment relatedAssignment = studentAssignments.stream()
-                .filter(a -> a.getTest() != null && a.getTest().getId().equals(request.getTestId()))
-                .findFirst()
-                .orElse(null);
-        if (relatedAssignment != null
-            && relatedAssignment.getDeadline() != null
-            && relatedAssignment.getDeadline().isBefore(java.time.LocalDateTime.now())) {
-            throw new RuntimeException("Deadline time is out: " + relatedAssignment.getDeadline());
+        if (student.getGroupNumber() != null) {
+            java.time.LocalDateTime now = java.time.LocalDateTime.now();
+            List<Assignment> groupAssignments = assignmentRepository.findAllByTargetGroup(student.getGroupNumber());
+            List<Assignment> forThisTest = groupAssignments.stream()
+                    .filter(a -> a.getTest() != null && a.getTest().getId().equals(request.getTestId()))
+                    .collect(Collectors.toList());
+            // Block only when every assignment for this test has expired
+            boolean hasActive = forThisTest.stream()
+                    .anyMatch(a -> a.getDeadline() == null || !a.getDeadline().isBefore(now));
+            if (!forThisTest.isEmpty() && !hasActive) {
+                throw new RuntimeException("Deadline time is out");
+            }
         }
 
         // Догружаем ответы отдельным запросом
