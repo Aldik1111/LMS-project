@@ -438,10 +438,10 @@
                     <select id="assignGroup"><option value="">Загрузка групп…</option></select>
                     <select id="assignTest"><option value="">— Выберите тест —</option></select>
                     <input type="datetime-local" id="assignDeadline">
-                    <button class="full" onclick="createAssignment()">Создать задание</button>
                     <label style="display:block; margin-bottom:6px; font-size:13px; color:var(--text-muted);">Попыток</label>
-                    <input type="number" id="assignAttempts" min="1" max="99" value="1" style="width:80px;">
-                    <span class="muted" style="font-size:13px; margin-left:8px;">шт. (1 = без пересдачи)</span>
+                    <input type="number" id="assignAttempts" min="1" max="100" value="1" style="width:80px;">
+                    <span class="muted" style="font-size:13px; margin-left:8px;"></span>
+                    <button class="full" onclick="createAssignment()">Создать задание</button>
                     <div id="assignError" class="error-text"></div>
                 </div>
             </div>

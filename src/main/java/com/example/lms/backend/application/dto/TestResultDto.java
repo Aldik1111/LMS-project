@@ -15,7 +15,7 @@ import java.util.List;
 public class TestResultDto {
     private Long id;
     private String testTitle;
-    private String studentName;
+    private String studentNgame;
     private Integer score;
     private Integer totalPoints;
     private Integer incorrectAnswers;
