@@ -51,6 +51,16 @@ public class TestController {
         }
     }
 
+    // PUT /api/tests/{id}
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateTest(@PathVariable Long id, @RequestBody TestDto dto) {
+        try {
+            return ResponseEntity.ok(testService.updateTest(id, dto));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     // DELETE /api/tests/{id}
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteTest(@PathVariable Long id){

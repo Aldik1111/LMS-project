@@ -92,6 +92,47 @@ public class TestService {
     }
 
     @Transactional
+    public TestDto updateTest(Long testId, TestDto dto) {
+        Test test = testRepository.findByIdWithQuestions(testId)
+                .orElseThrow(() -> new RuntimeException("Test not found"));
+
+        if (!testResultRepository.findAllByTestId(testId).isEmpty()) {
+            throw new RuntimeException("Нельзя редактировать тест, который уже сдавали студенты");
+        }
+
+        test.setTitle(dto.getTitle());
+        test.setDescription(dto.getDescription());
+
+        test.getQuestions().clear();
+        testRepository.saveAndFlush(test);
+
+        if (dto.getQuestions() != null) {
+            int order = 1;
+            for (QuestionDto qDto : dto.getQuestions()) {
+                Question question = Question.builder()
+                        .questionText(qDto.getQuestionText())
+                        .test(test)
+                        .orderIndex(order++)
+                        .build();
+                Question savedQuestion = questionRepository.save(question);
+
+                if (qDto.getAnswers() != null) {
+                    for (QuestionDto.AnswerDto aDto : qDto.getAnswers()) {
+                        answerRepository.save(Answer.builder()
+                                .answerText(aDto.getAnswerText())
+                                .label(aDto.getLabel())
+                                .correct(Boolean.TRUE.equals(aDto.getCorrect()))
+                                .question(savedQuestion)
+                                .build());
+                    }
+                }
+            }
+        }
+
+        return toDtoShort(test);
+    }
+
+    @Transactional
     public void deleteTest(Long testId) {
         if (!testRepository.existsById(testId)) {
             throw new RuntimeException("Test not found" + testId);
