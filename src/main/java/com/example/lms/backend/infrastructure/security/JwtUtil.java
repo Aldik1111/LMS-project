@@ -23,7 +23,7 @@ public class JwtUtil {
     @Value("${jwt.expiration}")
     private Long expiration;
 
-    // Создаём ключ подписи из нашей секретной строки
+    // Создаём ключ подписи из нашей  секретной строки
     // Этим ключом подписываем токен — без него токен нельзя подделать
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(secret.getBytes());
