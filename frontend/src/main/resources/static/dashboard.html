@@ -268,39 +268,54 @@
 
         if (filtered.length === 0) {
             document.getElementById('stList').innerHTML = `
-            <div class="st-empty">
-                <div class="st-empty-icon">📭</div>
-                <h3>Заданий нет</h3>
-                <p>${currentFilter === 'all' ? 'Вам ещё не назначили заданий' : 'Нет заданий в этой категории'}</p>
-            </div>`;
+        <div class="st-empty">
+            <div class="st-empty-icon">📭</div>
+            <h3>Заданий нет</h3>
+            <p>${currentFilter === 'all' ? 'Вам ещё не назначили заданий' : 'Нет заданий в этой категории'}</p>
+        </div>`;
             return;
         }
 
         const rows = filtered.map(a => {
-            const done = a.completed;
+            const attemptsStr = a.maxAttempts === 1
+                ? '1 попытка'
+                : `${a.attemptsMade} / ${a.maxAttempts} попыток`;
+
             const scoreHtml = (a.score != null && a.totalPoints != null)
-                ? `<div class="st-score">${a.score} / ${a.totalPoints}</div>` : '';
+                ? `<div class="st-score">Лучший: ${a.score} / ${a.totalPoints}</div>` : '';
+
             let actionHtml;
-            if (done) {
-                actionHtml = `${scoreHtml}<span class="st-badge-done">● Выполнено</span>`;
+            if (a.canRetake) {
+                const btnLabel = a.completed
+                    ? `Пересдать (${a.attemptsMade}/${a.maxAttempts}) →`
+                    : 'Пройти тест →';
+                actionHtml = `
+                ${scoreHtml}
+                <button class="st-action-btn" onclick="openTest(${a.testId}, ${a.id})">${btnLabel}</button>`;
+            } else if (a.completed) {
+                actionHtml = `
+                ${scoreHtml}
+                <span class="st-badge-done">● Выполнено</span>`;
             } else if (a.expired) {
-                actionHtml = `<span class="badge danger" style="padding:4px 12px;border-radius:20px;background:var(--danger-bg);color:var(--danger);font-size:12px;font-weight:600;">Срок истёк</span>`;
-            } else if (a.testId) {
-                actionHtml = `<button class="st-action-btn" onclick="openTest(${a.testId}, ${a.id})">Пройти тест →</button>`;
-            } else {
+                actionHtml = `<span style="padding:4px 12px;border-radius:20px;background:var(--danger-bg);color:var(--danger);font-size:12px;font-weight:600;">Срок истёк</span>`;
+            } else if (!a.testId) {
                 actionHtml = `<span class="muted">Нет теста</span>`;
+            } else {
+                actionHtml = `<span class="muted">Недоступно</span>`;
             }
 
             const testStr = a.testTitle && a.testTitle !== '-' ? `Тест: ${escapeHtml(a.testTitle)} · ` : '';
+            const dot = (a.completed && !a.canRetake) ? 'completed' : 'pending';
+
             return `
-            <div class="st-list-row">
-                <div class="st-dot ${done ? 'completed' : 'pending'}"></div>
-                <div class="st-row-body">
-                    <div class="st-row-title">${escapeHtml(a.title)}</div>
-                    <div class="st-row-sub">${a.description ? escapeHtml(a.description) + ' · ' : ''}${testStr}Срок: ${formatDate(a.deadline)}</div>
-                </div>
-                <div class="st-row-right">${actionHtml}</div>
-            </div>`;
+        <div class="st-list-row">
+            <div class="st-dot ${dot}"></div>
+            <div class="st-row-body">
+                <div class="st-row-title">${escapeHtml(a.title)}</div>
+                <div class="st-row-sub">${testStr}${attemptsStr} · Срок: ${formatDate(a.deadline)}</div>
+            </div>
+            <div class="st-row-right">${actionHtml}</div>
+        </div>`;
         }).join('');
 
         document.getElementById('stList').innerHTML = `<div class="st-list">${rows}</div>`;
@@ -438,20 +453,22 @@
             answers.push({ questionId: q.id, selectedAnswerId: Number(sel.value) });
         }
 
-        const result = await apiPost(`/tests/${testId}/submit`, { answers });
+        // передаём assignmentId чтобы бэк знал к какому заданию привязать результат
+        const result = await apiPost(`/tests/${testId}/submit`, { assignmentId, answers });
         if (!result.ok) {
-            alert(result.data || "Не удалось отправить тест — возможно срок истёк");
+            alert(result.data || "Не удалось отправить тест — возможно срок истёк или попытки исчерпаны");
             return;
         }
 
         const r = result.data;
         const pct = r.totalPoints > 0 ? Math.round((r.score / r.totalPoints) * 100) : 0;
+        const attemptInfo = r.attemptNumber ? ` · Попытка ${r.attemptNumber}` : '';
 
         document.getElementById('testCard').innerHTML = `
         <div class="st-result-hero">
             <div class="st-result-circle">${r.score}/${r.totalPoints}</div>
             <div class="st-result-title">${escapeHtml(r.testTitle)}</div>
-            <p class="st-result-sub">${pct}% правильных · ${r.incorrectCount} ошибок</p>
+            <p class="st-result-sub">${pct}% правильных · ${r.incorrectCount} ошибок${attemptInfo}</p>
         </div>
         <div style="margin-top:20px">
             ${r.details.map(d => `

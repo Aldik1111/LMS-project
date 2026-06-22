@@ -11,18 +11,20 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 
-
 public class AssignmentDto {
     private Long id;
     private String title;
     private String description;
     private String targetGroup;
     private Long testId;
-    private String TestTitle;
+    private String testTitle;
     private LocalDateTime createdAt;
     private LocalDateTime deadline;
     private Integer score;
     private Integer totalPoints;
     private Boolean completed;
     private Boolean expired;
+    private Integer maxAttempts;
+    private Integer attemptsMade;
+    private Boolean canRetake;
 }

@@ -68,6 +68,17 @@ public class StatisticsService {
     }
 
     private TestResultDto toDto(TestResult r) {
+        int attemptNumber = 0;
+
+        if(r.getAssignment() != null){
+            attemptNumber = (int) testResultRepository.findAllByStudentId(r.getStudent().getId())
+                    .stream()
+                    .filter(other -> other.getAssignment() != null
+                            && other.getAssignment().getId().equals(r.getAssignment().getId())
+                            && !other.getCompletedAt().isAfter(r.getCompletedAt()))
+                    .count();
+        }
+
         return new TestResultDto(
                 r.getId(),
                 r.getTest().getTitle(),
@@ -76,7 +87,8 @@ public class StatisticsService {
                 r.getTotalPoints(),
                 r.getTotalPoints() - r.getScore(),
                 r.getCompletedAt(),
-                null
+                null,
+                attemptNumber
         );
     }
 

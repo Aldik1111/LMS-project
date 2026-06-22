@@ -39,6 +39,10 @@ public class Assignment {
     @Column(nullable = false)
     private LocalDateTime deadline;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private int maxAttempts = 1;
+
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();

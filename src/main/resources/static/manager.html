@@ -438,6 +438,9 @@
                     <select id="assignTest"><option value="">Без теста</option></select>
                     <input type="datetime-local" id="assignDeadline">
                     <button class="full" onclick="createAssignment()">Создать задание</button>
+                    <label style="display:block; margin-bottom:6px; font-size:13px; color:var(--text-muted);">Попыток</label>
+                    <input type="number" id="assignAttempts" min="1" max="99" value="1" style="width:80px;">
+                    <span class="muted" style="font-size:13px; margin-left:8px;">шт. (1 = без пересдачи)</span>
                     <div id="assignError" class="error-text"></div>
                 </div>
             </div>
@@ -705,12 +708,14 @@
 
         if (!title || !targetGroup || !deadline) { errorEl.textContent = "Заполните название, выберите группу и срок"; return; }
 
+        const maxAttempts = parseInt(document.getElementById("assignAttempts").value) || 1;
+
         const result = await apiPost("/assignments", {
             title, description, targetGroup,
             testId: testId ? Number(testId) : null,
-            deadline: deadline + ":00"
+            deadline: deadline + ":00",
+            maxAttempts   // ← добавлено
         });
-
         if (!result.ok) {errorEl.textContent = "Ошибка: " + result.text; return; }
 
         document.getElementById("assignTitle").value = "";
@@ -751,6 +756,8 @@
                         <div>
                             <div class="li-title">${escapeHtml(a.title)}</div>
                             <div class="li-sub">→ ${escapeHtml(a.studentName)} · ${formatDate(a.deadline)}</div>
+                            <div class="muted">${escapeHtml(a.testTitle || "без теста")} · до ${formatDate(a.deadline)} · ${a.maxAttempts === 1 ? "1 попытка" : a.maxAttempts + " попыток"}</div>
+                    
                         </div>
                         <span class="badge ${a.status === 'COMPLETED' ? 'success' : 'pending'}">
                             ${a.status === 'COMPLETED' ? 'Выполнено' : 'В процессе'}

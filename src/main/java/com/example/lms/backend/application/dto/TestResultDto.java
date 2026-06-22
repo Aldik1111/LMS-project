@@ -1,5 +1,6 @@
 package com.example.lms.backend.application.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,6 +21,7 @@ public class TestResultDto {
     private Integer incorrectAnswers;
     private LocalDateTime completedAt;
     private List<AnswerDetailDto> details;
+    private int attemptNumber;
 
     @Data
     @AllArgsConstructor
@@ -28,7 +30,10 @@ public class TestResultDto {
         private String questionText;
         private String selectedAnswer;
         private String correctAnswer;
+
+        @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
         private boolean correct;
+
     }
 
 }

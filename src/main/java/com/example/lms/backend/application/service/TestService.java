@@ -121,8 +121,19 @@ public class TestService {
                     && targetAssignment.getDeadline().isBefore(java.time.LocalDateTime.now())) {
                 throw new RuntimeException("Deadline time is out");
             }
-            if (testResultRepository.existsByStudentIdAndAssignmentId(studentId, request.getAssignmentId())) {
-                throw new RuntimeException("You arleady complete test");
+            if (request.getAssignmentId() != null) {
+                targetAssignment = assignmentRepository.findById(request.getAssignmentId())
+                        .orElseThrow(() -> new RuntimeException("Assignment not found"));
+
+                if (targetAssignment.getDeadline() != null
+                        && targetAssignment.getDeadline().isBefore(java.time.LocalDateTime.now())) {
+                    throw new RuntimeException("Срок сдачи истёк");
+                }
+
+                int attemptsMade = testResultRepository.countByStudentIdAndAssignmentId(studentId, request.getAssignmentId());
+                if (attemptsMade >= targetAssignment.getMaxAttempts()) {
+                    throw new RuntimeException("Вы исчерпали все попытки (" + attemptsMade + "/" + targetAssignment.getMaxAttempts() + ")");
+                }
             }
         }
 
@@ -191,6 +202,9 @@ public class TestService {
         savedResult.setScore(correctCount);
         testResultRepository.save(savedResult);
 
+        int attemptNumber = testResultRepository.countByStudentIdAndAssignmentId(studentId,
+                request.getAssignmentId() != null ? request.getAssignmentId() : 0L);
+
         return new TestResultDto(
                 savedResult.getId(),
                 test.getTitle(),
@@ -199,7 +213,8 @@ public class TestService {
                 questionsWithAnswers.size(),
                 questionsWithAnswers.size() - correctCount,
                 savedResult.getCompletedAt(),
-                details
+                details,
+                attemptNumber
         );
     }
 

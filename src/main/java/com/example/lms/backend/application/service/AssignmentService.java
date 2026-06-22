@@ -35,21 +35,13 @@ public class AssignmentService {
     }
 
     @Transactional(readOnly = true)
-    public List<AssignmentDto> getAssignmentsForGroup(String group, Long studentId){ // For students
-        List<Assignment> assignments = assignmentRepository.findAllByTargetGroup(group);
-
-        return assignments.stream().map(a -> {
-            AssignmentDto dto = toDto(a, studentId);
-            if (Boolean.TRUE.equals(dto.getCompleted())) {
-                testResultRepository.findByStudentIdAndAssignmentId(studentId, a.getId())
-                        .ifPresent(r -> {
-                            dto.setScore(r.getScore());
-                            dto.setTotalPoints(r.getTotalPoints());
-                        });
-            }
-            return dto;
-        }).collect(Collectors.toList());
+    public List<AssignmentDto> getAssignmentsForGroup(String group, Long studentId) {
+        return assignmentRepository.findAllByTargetGroup(group)
+                .stream()
+                .map(a -> toDto(a, studentId))
+                .collect(Collectors.toList());
     }
+
 
     @Transactional
     public AssignmentDto createAssignment(AssignmentDto dto, Long creatorId) {
@@ -59,6 +51,8 @@ public class AssignmentService {
         if (dto.getTargetGroup() == null || dto.getTargetGroup().isBlank()) {
             throw new RuntimeException("Target group is required");
         }
+
+        int maxAttempts = (dto.getMaxAttempts() != null && dto.getMaxAttempts() > 0) ? dto.getMaxAttempts() : 1;
 
         Test test = null;
         if (dto.getTestId() != null) {
@@ -73,6 +67,7 @@ public class AssignmentService {
                 .test(test)
                 .assignedBy(creator)
                 .deadline(dto.getDeadline())
+                .maxAttempts(maxAttempts)
                 .build();
 
         Assignment saved =  assignmentRepository.save(assignment);
@@ -88,11 +83,29 @@ public class AssignmentService {
 
     private AssignmentDto toDto(Assignment a, Long studentId) {
         boolean expired = a.getDeadline() != null && a.getDeadline().isBefore(LocalDateTime.now());
-        boolean completed = false;
 
-        if (!expired && studentId != null) {
-            completed = testResultRepository.existsByStudentIdAndAssignmentId(studentId, a.getId());
+        Integer attemptsMade = 0;
+        Boolean completed = false;
+        Boolean canRetake = false;
+        Integer score = null;
+        Integer totalPoints = null;
+
+        if (studentId != null && a.getTest() != null) {
+            attemptsMade = testResultRepository.countByStudentIdAndAssignmentId(studentId, a.getId());
+            completed = attemptsMade > 0;
+            canRetake = !expired && attemptsMade < a.getMaxAttempts();
+
+            if (completed) {
+                score = testResultRepository.findBestScoreByStudentIdAndAssignmentId(studentId, a.getId());
+                var results = testResultRepository.findAllByStudentId(studentId);
+                totalPoints = results.stream()
+                        .filter(r -> r.getAssignment() != null && r.getAssignment().getId().equals(a.getId()))
+                        .map(TestResult::getTotalPoints)
+                        .findFirst()
+                        .orElse(null);
+            }
         }
+
 
         return new AssignmentDto(
                 a.getId(),
@@ -103,10 +116,13 @@ public class AssignmentService {
                 a.getTest() != null ? a.getTest().getTitle() : "-",
                 a.getCreatedAt(),
                 a.getDeadline(),
-                null,
-                null,
+                score,
+                totalPoints,
                 completed,
-                expired
+                expired,
+                a.getMaxAttempts(),
+                attemptsMade,
+                canRetake
         );
     }
 
