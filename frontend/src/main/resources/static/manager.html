@@ -257,6 +257,23 @@
         /* ===== STATS TAB ===== */
         .stat-form { margin-bottom: 16px; }
 
+        /* ===== FIELD LABELS ===== */
+        .field-label {
+            display: block; font-size: 11px; font-weight: 600;
+            text-transform: uppercase; letter-spacing: .05em;
+            color: var(--text-muted); margin: 12px 0 5px;
+        }
+        .field-label:first-child { margin-top: 0; }
+
+        /* ===== STATS OVERVIEW ===== */
+        .stats-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .stats-table th { text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); padding: 8px 12px; border-bottom: 1px solid var(--border); }
+        .stats-table td { padding: 10px 12px; border-bottom: 1px solid var(--border-soft); color: var(--text); }
+        .stats-table tr:last-child td { border-bottom: none; }
+        .stats-table tr:hover td { background: var(--surface-2); }
+        .pct-bar { height: 4px; border-radius: 2px; background: var(--border); margin-top: 4px; }
+        .pct-fill { height: 100%; border-radius: 2px; background: var(--accent); }
+
         @media (max-width: 920px) {
             .mgr-sidebar { width: 56px; }
             .mgr-logo-text, .mgr-logo-sub, .nav-label, .nav-chip,
@@ -295,6 +312,11 @@
             <span class="nav-ico">📋</span>
             <span class="nav-label">Задания</span>
             <span class="nav-chip" id="chip-assignments">—</span>
+        </button>
+        <button class="mgr-nav-btn" data-tab="students" onclick="showTab('students')">
+            <span class="nav-ico">🎓</span>
+            <span class="nav-label">Студенты</span>
+            <span class="nav-chip" id="chip-students">—</span>
         </button>
         <button class="mgr-nav-btn" data-tab="stats" onclick="showTab('stats')">
             <span class="nav-ico">📊</span>
@@ -433,15 +455,21 @@
                     <span class="form-toggle" id="assignFormToggle">+ Открыть форму</span>
                 </div>
                 <div class="form-panel-body" id="assignForm">
-                    <input type="text" id="assignTitle" placeholder="Название задания">
-                    <input type="text" id="assignDescription" placeholder="Описание (необязательно)">
+                    <label class="field-label">Название задания</label>
+                    <input type="text" id="assignTitle" placeholder="Например: Контрольная работа №1">
+                    <label class="field-label">Описание (необязательно)</label>
+                    <input type="text" id="assignDescription" placeholder="Краткое пояснение для студентов">
+                    <label class="field-label">Группа</label>
                     <select id="assignGroup"><option value="">Загрузка групп…</option></select>
+                    <label class="field-label">Тест <span style="color:var(--danger)">*</span></label>
                     <select id="assignTest"><option value="">— Выберите тест —</option></select>
+                    <label class="field-label">Срок сдачи</label>
                     <input type="datetime-local" id="assignDeadline">
-                    <button class="full" onclick="createAssignment()">Создать задание</button>
-                    <label style="display:block; margin-bottom:6px; font-size:13px; color:var(--text-muted);">Попыток</label>
-                    <input type="number" id="assignAttempts" min="1" max="99" value="1" style="width:80px;">
-                    <span class="muted" style="font-size:13px; margin-left:8px;">шт. (1 = без пересдачи)</span>
+                    <label class="field-label">Количество попыток <span style="color:var(--text-faint);font-weight:400;text-transform:none">(1 = без пересдачи)</span></label>
+                    <input type="number" id="assignAttempts" min="1" max="99" value="1" style="width:100px;">
+                    <div style="margin-top:14px">
+                        <button class="full" onclick="createAssignment()">Создать задание</button>
+                    </div>
                     <div id="assignError" class="error-text"></div>
                 </div>
             </div>
@@ -454,14 +482,69 @@
             </div>
         </div>
 
+        <!-- ===== TAB: STUDENTS ===== -->
+        <div id="tab-students" class="mgr-tab">
+            <div class="form-panel">
+                <div class="form-panel-hdr" id="studentFormHdr" onclick="toggleForm('studentForm')">
+                    <span class="form-panel-ttl">🎓 Добавить студента</span>
+                    <span class="form-toggle" id="studentFormToggle">+ Открыть форму</span>
+                </div>
+                <div class="form-panel-body" id="studentForm">
+                    <label class="field-label">ФИО студента</label>
+                    <input type="text" id="stuName" placeholder="Иванов Иван Иванович">
+                    <label class="field-label">Email</label>
+                    <input type="email" id="stuEmail" placeholder="student@example.com">
+                    <label class="field-label">Пароль</label>
+                    <input type="password" id="stuPassword" placeholder="Минимум 6 символов">
+                    <label class="field-label">Номер группы</label>
+                    <input type="text" id="stuGroup" placeholder="Например: ИС-21">
+                    <div style="margin-top:14px">
+                        <button class="full" onclick="createStudent()">Создать студента</button>
+                    </div>
+                    <div id="stuError" class="error-text"></div>
+                </div>
+            </div>
+
+            <div class="list-card">
+                <div class="list-card-head">
+                    <span class="list-card-title">Все студенты</span>
+                    <span id="stuCountBadge" class="badge pending" style="font-size:11px">—</span>
+                </div>
+                <div id="studentsList"><div class="empty-state" style="padding:24px">Загрузка…</div></div>
+            </div>
+        </div>
+
         <!-- ===== TAB: STATISTICS ===== -->
         <div id="tab-stats" class="mgr-tab">
-            <div class="card">
-                <h2>Аналитика по тестам</h2>
-                <select id="statsTest" onchange="loadStatistics()" class="stat-form">
-                    <option value="">Выберите тест для просмотра</option>
-                </select>
-                <div id="statsResult"></div>
+
+            <div class="list-card" style="margin-bottom:16px">
+                <div class="list-card-head">
+                    <span class="list-card-title">Сводка по всем тестам</span>
+                    <button class="secondary" style="font-size:12px;padding:5px 10px" onclick="loadOverallStats()">↺ Обновить</button>
+                </div>
+                <div id="overallStats"><div class="empty-state" style="padding:20px;font-size:13px">Загрузка…</div></div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+                <div class="list-card">
+                    <div class="list-card-head"><span class="list-card-title">По тесту — детально</span></div>
+                    <div style="padding:16px">
+                        <select id="statsTest" onchange="loadStatsByTest()" style="margin-bottom:0">
+                            <option value="">Выберите тест</option>
+                        </select>
+                    </div>
+                    <div id="statsResult"></div>
+                </div>
+
+                <div class="list-card">
+                    <div class="list-card-head"><span class="list-card-title">По студенту</span></div>
+                    <div style="padding:16px">
+                        <select id="statsStudent" onchange="loadStatsByStudent()" style="margin-bottom:0">
+                            <option value="">Выберите студента</option>
+                        </select>
+                    </div>
+                    <div id="statsStudentResult"></div>
+                </div>
             </div>
         </div>
 
@@ -481,7 +564,7 @@
     }
 
     // ===== TABS =====
-    const TAB_LABELS = { overview: 'Обзор', tests: 'Тесты', assignments: 'Задания', stats: 'Аналитика' };
+    const TAB_LABELS = { overview: 'Обзор', tests: 'Тесты', assignments: 'Задания', students: 'Студенты', stats: 'Аналитика' };
 
     function showTab(name) {
         document.querySelectorAll('.mgr-tab').forEach(t => t.classList.remove('active'));
@@ -840,39 +923,140 @@
         loadAssignments();
     }
 
+    // ===== STUDENTS =====
+    async function createStudent() {
+        const fullName = document.getElementById('stuName').value.trim();
+        const email    = document.getElementById('stuEmail').value.trim();
+        const password = document.getElementById('stuPassword').value.trim();
+        const group    = document.getElementById('stuGroup').value.trim();
+        const errorEl  = document.getElementById('stuError');
+        errorEl.textContent = '';
+
+        if (!fullName || !email || !password || !group) {
+            errorEl.textContent = 'Заполните все поля'; return;
+        }
+        if (password.length < 6) {
+            errorEl.textContent = 'Пароль должен быть не менее 6 символов'; return;
+        }
+
+        const res = await apiPost('/users', { fullName, email, password, role: 'STUDENT', group, active: true });
+        if (!res.ok) { errorEl.textContent = 'Ошибка: ' + (res.data || res.text); return; }
+
+        ['stuName','stuEmail','stuPassword','stuGroup'].forEach(id => document.getElementById(id).value = '');
+        toggleForm('studentForm');
+        loadStudents();
+        loadFormOptions();
+    }
+
+    async function loadStudents() {
+        try {
+            const students = await apiGet('/users/students');
+            document.getElementById('chip-students').textContent = students.length;
+            document.getElementById('stuCountBadge').textContent = students.length + ' чел.';
+            document.getElementById('stat-students').textContent = students.length;
+
+            // populate student selector in stats
+            document.getElementById('statsStudent').innerHTML =
+                `<option value="">Выберите студента</option>` +
+                students.map(s => `<option value="${s.id}">${escapeHtml(s.fullName)} (${escapeHtml(s.group || '—')})</option>`).join('');
+
+            const box = document.getElementById('studentsList');
+            box.innerHTML = students.length
+                ? students.map(s => `
+                    <div class="list-item">
+                        <div>
+                            <div class="li-title">${escapeHtml(s.fullName)}</div>
+                            <div class="li-sub">${escapeHtml(s.email)} · Группа: <b>${escapeHtml(s.group || '—')}</b></div>
+                        </div>
+                        <div class="li-actions">
+                            <span class="badge ${s.active ? 'success' : 'danger'}" style="font-size:11px">
+                                ${s.active ? '● Активен' : '● Заблокирован'}
+                            </span>
+                        </div>
+                    </div>`).join('')
+                : '<div class="empty-state" style="padding:28px">Студентов пока нет</div>';
+        } catch (err) {
+            document.getElementById('studentsList').innerHTML = `<div class="empty-state" style="padding:24px">Ошибка: ${err.message}</div>`;
+        }
+    }
+
     // ===== STATISTICS =====
-    async function loadStatistics() {
+    async function loadOverallStats() {
+        const box = document.getElementById('overallStats');
+        try {
+            const data = await apiGet('/statistics/overall');
+            if (!data.length) { box.innerHTML = '<div class="empty-state" style="padding:20px;font-size:13px">Нет данных</div>'; return; }
+            box.innerHTML = `
+            <table class="stats-table">
+                <thead><tr><th>Тест</th><th>Попыток</th><th>Средний балл</th><th>% правильных</th></tr></thead>
+                <tbody>${data.map(d => {
+                    const pct = Math.round(d.averagePercent || 0);
+                    return `<tr>
+                        <td>${escapeHtml(d.testTitle)}</td>
+                        <td>${d.attemptCount}</td>
+                        <td>${(d.averageScore || 0).toFixed(1)}</td>
+                        <td>
+                            <span>${pct}%</span>
+                            <div class="pct-bar"><div class="pct-fill" style="width:${pct}%"></div></div>
+                        </td>
+                    </tr>`;
+                }).join('')}</tbody>
+            </table>`;
+        } catch (err) {
+            box.innerHTML = `<div class="empty-state" style="padding:20px">Ошибка: ${err.message}</div>`;
+        }
+    }
+
+    async function loadStatsByTest() {
         const testId = document.getElementById('statsTest').value;
         const box = document.getElementById('statsResult');
         if (!testId) { box.innerHTML = ''; return; }
-
         try {
             const results = await apiGet(`/statistics/test/${testId}`);
-            if (!results.length) {
-                box.innerHTML = '<p class="empty-state">Пока никто не сдавал этот тест</p>';
-                return;
-            }
+            if (!results.length) { box.innerHTML = '<div class="empty-state" style="padding:20px;font-size:13px">Никто не сдавал этот тест</div>'; return; }
             box.innerHTML = `
-            <table>
-                <thead><tr><th>Студент</th><th>Балл</th><th>Неправильных</th><th>Дата</th></tr></thead>
-                <tbody>
-                    ${results.map(r => `<tr>
-                        <td>${escapeHtml(r.studentName)}</td>
-                        <td>${r.score} / ${r.totalPoints}</td>
-                        <td>${r.incorrectAnswers}</td>
-                        <td>${formatDate(r.completedAt)}</td>
-                    </tr>`).join('')}
-                </tbody>
+            <table class="stats-table">
+                <thead><tr><th>Студент</th><th>Балл</th><th>Ошибок</th><th>Дата</th></tr></thead>
+                <tbody>${results.map(r => `<tr>
+                    <td>${escapeHtml(r.studentName)}</td>
+                    <td><b>${r.score}</b> / ${r.totalPoints}</td>
+                    <td>${r.incorrectAnswers}</td>
+                    <td>${formatDate(r.completedAt)}</td>
+                </tr>`).join('')}</tbody>
             </table>`;
         } catch (err) {
-            box.textContent = 'Ошибка: ' + err.message;
+            box.innerHTML = `<div class="empty-state" style="padding:20px">Ошибка: ${err.message}</div>`;
+        }
+    }
+
+    async function loadStatsByStudent() {
+        const studentId = document.getElementById('statsStudent').value;
+        const box = document.getElementById('statsStudentResult');
+        if (!studentId) { box.innerHTML = ''; return; }
+        try {
+            const results = await apiGet(`/statistics/student/${studentId}`);
+            if (!results.length) { box.innerHTML = '<div class="empty-state" style="padding:20px;font-size:13px">Студент ещё не сдавал тестов</div>'; return; }
+            box.innerHTML = `
+            <table class="stats-table">
+                <thead><tr><th>Тест</th><th>Балл</th><th>Ошибок</th><th>Дата</th></tr></thead>
+                <tbody>${results.map(r => `<tr>
+                    <td>${escapeHtml(r.testTitle)}</td>
+                    <td><b>${r.score}</b> / ${r.totalPoints}</td>
+                    <td>${r.incorrectAnswers}</td>
+                    <td>${formatDate(r.completedAt)}</td>
+                </tr>`).join('')}</tbody>
+            </table>`;
+        } catch (err) {
+            box.innerHTML = `<div class="empty-state" style="padding:20px">Ошибка: ${err.message}</div>`;
         }
     }
 
     // ===== INIT =====
     loadTests();
     loadAssignments();
+    loadStudents();
     loadFormOptions();
+    loadOverallStats();
 </script>
 </body>
 </html>
