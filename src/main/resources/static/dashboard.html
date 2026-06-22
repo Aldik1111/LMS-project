@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <title>LMS</title>
     <link rel="stylesheet" href="style.css">
     <style>
@@ -192,7 +193,7 @@
 <script src="api.js"></script>
 <script>
     requireAuth();
-
+    const FACE_API_MODELS_URL = "https://justadudewhohacks.github.io/face-api.js/models";
     const role = getRole();
     const name = getFullName();
     const displayName = (name && name !== 'undefined' && name !== 'null') ? name : '';
@@ -306,28 +307,105 @@
     }
 
     // ===== Test =====
+
+    // ===== Test + Proctoring =====
+
+    let faceCheckInterval = null;
+    let noFaceCount = 0;
+    let videoStream = null;
+
     async function openTest(testId, assignmentId) {
+        window.currentAssignmentId = assignmentId;
+
+        let status;
+        try {
+            status = await apiGet("/proctoring/status");
+        } catch (e) {
+            status = { hasReferencePhoto: true }; // если эндпоинт недоступен — не блокируем тест
+        }
+
+        document.getElementById('testOverlay').classList.add('open');
+
+        if (!status.hasReferencePhoto) {
+            await renderPhotoCaptureScreen(testId);
+        } else {
+            await renderTestScreen(testId);
+        }
+    }
+
+    // Экран захвата референсного фото (показывается один раз для студента)
+    async function renderPhotoCaptureScreen(testId) {
+        document.getElementById('testCard').innerHTML = `
+        <div class="st-test-hdr">
+            <h2>Подготовка к тесту</h2>
+            <button class="st-close-btn" onclick="closeTest()">✕</button>
+        </div>
+        <p class="muted" style="margin-bottom:16px;">Перед началом нужно сделать фото для системы прокторинга.</p>
+        <video id="setupVideo" autoplay muted style="width:100%; max-width:360px; border-radius:8px; display:block; margin:0 auto;"></video>
+        <div class="st-test-actions">
+            <button class="st-cancel-btn" onclick="closeTest()">Отмена</button>
+            <button class="st-submit-btn" onclick="takeReferencePhoto(${testId})">Сделать фото</button>
+        </div>
+    `;
+
+        try {
+            videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+            document.getElementById("setupVideo").srcObject = videoStream;
+        } catch (e) {
+            alert("Не удалось получить доступ к камере: " + e.message);
+        }
+    }
+
+    async function takeReferencePhoto(testId) {
+        const video = document.getElementById("setupVideo");
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext("2d").drawImage(video, 0, 0);
+
+        const photoBase64 = canvas.toDataURL("image/jpeg", 0.7);
+
+        try {
+            await apiPost("/proctoring/photo", { photoBase64 });
+        } catch (e) {
+            console.error("Не удалось сохранить фото:", e);
+        }
+
+        if (videoStream) {
+            videoStream.getTracks().forEach(track => track.stop());
+            videoStream = null;
+        }
+
+        await renderTestScreen(testId);
+    }
+
+    // Экран самого теста (вопросы + видео прокторинга в шапке)
+    async function renderTestScreen(testId) {
         const test = await apiGet(`/tests/${testId}`);
         window.currentTest = test;
-        window.currentAssignmentId = assignmentId;
 
         let html = `
         <div class="st-test-hdr">
             <h2>${escapeHtml(test.title)}</h2>
             <button class="st-close-btn" onclick="closeTest()">✕</button>
-        </div>`;
+        </div>
+        <div style="display:flex; gap:12px; align-items:center; margin-bottom:20px; padding:10px; background:var(--surface-2); border-radius:var(--radius-sm);">
+            <video id="proctorVideo" autoplay muted style="width:90px; border-radius:8px; flex-shrink:0;"></video>
+            <p class="muted" id="proctorStatus" style="margin:0; font-size:13px;">Запуск камеры…</p>
+        </div>
+    `;
 
         test.questions.forEach((q, i) => {
             html += `
-            <div class="st-question-block">
-                <div class="st-q-label">Вопрос ${i + 1}</div>
-                <div class="st-q-text">${escapeHtml(q.questionText)}</div>`;
+        <div class="st-question-block">
+            <div class="st-q-label">Вопрос ${i + 1}</div>
+            <div class="st-q-text">${escapeHtml(q.questionText)}</div>`;
             q.answers.forEach(a => {
                 html += `
-                <label class="st-answer-label">
-                    <input type="radio" name="q_${q.id}" value="${a.id}">
-                    <span>${a.label}. ${escapeHtml(a.answerText)}</span>
-                </label>`;
+            <label class="st-answer-label">
+                <input type="radio" name="q_${q.id}" value="${a.id}">
+                <span>${a.label}. ${escapeHtml(a.answerText)}</span>
+            </label>`;
             });
             html += `</div>`;
         });
@@ -335,18 +413,22 @@
         html += `
         <div class="st-test-actions">
             <button class="st-cancel-btn" onclick="closeTest()">Отмена</button>
-            <button class="st-submit-btn" onclick="submitTest(${testId}, ${assignmentId})">Сдать тест</button>
+            <button class="st-submit-btn" onclick="submitTest(${testId}, ${window.currentAssignmentId})">Сдать тест</button>
         </div>`;
 
         document.getElementById('testCard').innerHTML = html;
-        document.getElementById('testOverlay').classList.add('open');
+
+        startProctoring(testId);
     }
 
     function closeTest() {
+        stopProctoring();
         document.getElementById('testOverlay').classList.remove('open');
     }
 
     async function submitTest(testId, assignmentId) {
+        stopProctoring();
+
         const test = window.currentTest;
         const answers = [];
 
@@ -356,7 +438,7 @@
             answers.push({ questionId: q.id, selectedAnswerId: Number(sel.value) });
         }
 
-        const result = await apiPost(`/tests/${testId}/submit`, { testId, assignmentId, answers });
+        const result = await apiPost(`/tests/${testId}/submit`, { answers });
         if (!result.ok) {
             alert(result.data || "Не удалось отправить тест — возможно срок истёк");
             return;
@@ -369,7 +451,7 @@
         <div class="st-result-hero">
             <div class="st-result-circle">${r.score}/${r.totalPoints}</div>
             <div class="st-result-title">${escapeHtml(r.testTitle)}</div>
-            <p class="st-result-sub">${pct}% правильных · ${r.incorrectAnswers} ошибок</p>
+            <p class="st-result-sub">${pct}% правильных · ${r.incorrectCount} ошибок</p>
         </div>
         <div style="margin-top:20px">
             ${r.details.map(d => `
@@ -388,10 +470,69 @@
     }
 
     async function finishTest() {
-        closeTest();
+        document.getElementById('testOverlay').classList.remove('open');
         allAssignments = await apiGet('/assignments');
         renderList();
     }
+
+    // ===== Proctoring =====
+
+    async function startProctoring(testId) {
+        const statusEl = document.getElementById("proctorStatus");
+        try {
+            if (!faceapi.nets.tinyFaceDetector.params) {
+                await faceapi.nets.tinyFaceDetector.loadFromUri(FACE_API_MODELS_URL);
+            }
+
+            videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+            const video = document.getElementById("proctorVideo");
+            video.srcObject = videoStream;
+
+            if (statusEl) statusEl.textContent = "Прокторинг активен";
+            noFaceCount = 0;
+
+            faceCheckInterval = setInterval(async () => {
+                const video = document.getElementById("proctorVideo");
+                const statusEl = document.getElementById("proctorStatus");
+                if (!video || !statusEl) { stopProctoring(); return; }
+
+                const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions());
+
+                if (detection) {
+                    noFaceCount = 0;
+                    statusEl.textContent = "Прокторинг активен";
+                    statusEl.style.color = "";
+                } else {
+                    noFaceCount++;
+                    statusEl.textContent = "Лицо не обнаружено в кадре";
+                    statusEl.style.color = "#dc2626";
+
+                    if (noFaceCount === 1) {
+                        apiPost("/proctoring/violation", {
+                            testId: testId,
+                            violationType: "NO_FACE_DETECTED"
+                        }).catch(() => {});
+                    }
+                }
+            }, 5000);
+
+        } catch (err) {
+            console.error("Не удалось запустить прокторинг:", err);
+            if (statusEl) statusEl.textContent = "Камера недоступна — прокторинг отключён";
+        }
+    }
+
+    function stopProctoring() {
+        if (faceCheckInterval) {
+            clearInterval(faceCheckInterval);
+            faceCheckInterval = null;
+        }
+        if (videoStream) {
+            videoStream.getTracks().forEach(track => track.stop());
+            videoStream = null;
+        }
+    }
+
 </script>
 </body>
 </html>
