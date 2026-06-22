@@ -134,7 +134,11 @@
             font-family: var(--font-display); font-size: 18px;
             font-weight: 700; letter-spacing: -.02em;
         }
-        .mgr-content { padding: 26px 28px 56px; overflow-y: auto; }
+        .mgr-content { padding: 26px 28px 56px; overflow-y: auto; flex: 1; }
+
+        /* ===== RECENT GRID CARDS MIN-HEIGHT ===== */
+        .recent-grid .list-card { min-height: 220px; display: flex; flex-direction: column; }
+        .recent-grid .list-card > div:last-child { flex: 1; }
 
         /* ===== STATS GRID ===== */
         .stats-grid {
@@ -883,13 +887,13 @@
                     <div class="list-item">
                         <div>
                             <div class="li-title">${escapeHtml(a.title)}
-                                <span class="muted" style="font-weight:400"> → ${escapeHtml(a.studentName)}</span>
+                                <span class="muted" style="font-weight:400"> → Группа: ${escapeHtml(a.targetGroup || '—')}</span>
                             </div>
-                            <div class="li-sub">${escapeHtml(a.testTitle || 'без теста')} · до ${formatDate(a.deadline)}</div>
+                            <div class="li-sub">${escapeHtml(a.testTitle || 'без теста')} · до ${formatDate(a.deadline)} · ${a.maxAttempts === 1 ? '1 попытка' : (a.maxAttempts || 1) + ' попыток'}</div>
                         </div>
                         <div class="li-actions">
-                            <span class="badge ${a.status === 'COMPLETED' ? 'success' : 'pending'}">
-                                ${a.status === 'COMPLETED' ? 'Выполнено' : 'В процессе'}
+                            <span class="badge ${a.expired ? 'danger' : 'pending'}">
+                                ${a.expired ? 'Просрочено' : 'Активно'}
                             </span>
                             <button class="danger" onclick="deleteAssignment(${a.id})">Удалить</button>
                         </div>
@@ -902,12 +906,11 @@
                     <div class="list-item">
                         <div>
                             <div class="li-title">${escapeHtml(a.title)}</div>
-                            <div class="li-sub">→ ${escapeHtml(a.studentName)} · ${formatDate(a.deadline)}</div>
-                            <div class="muted">${escapeHtml(a.testTitle || "без теста")} · до ${formatDate(a.deadline)} · ${a.maxAttempts === 1 ? "1 попытка" : a.maxAttempts + " попыток"}</div>
-
+                            <div class="li-sub">Группа: ${escapeHtml(a.targetGroup || '—')} · ${escapeHtml(a.testTitle || 'без теста')}</div>
+                            <div class="muted">до ${formatDate(a.deadline)} · ${a.maxAttempts === 1 ? '1 попытка' : (a.maxAttempts || 1) + ' попыток'}</div>
                         </div>
-                        <span class="badge ${a.status === 'COMPLETED' ? 'success' : 'pending'}">
-                            ${a.status === 'COMPLETED' ? 'Выполнено' : 'В процессе'}
+                        <span class="badge ${a.expired ? 'danger' : 'pending'}">
+                            ${a.expired ? 'Просрочено' : 'Активно'}
                         </span>
                     </div>`).join('')
                 : '<div class="empty-state" style="padding:20px;font-size:13px">Нет заданий</div>';
@@ -976,7 +979,8 @@
                     </div>`).join('')
                 : '<div class="empty-state" style="padding:28px">Студентов пока нет</div>';
         } catch (err) {
-            document.getElementById('studentsList').innerHTML = `<div class="empty-state" style="padding:24px">Ошибка: ${err.message}</div>`;
+            document.getElementById('stat-students').textContent = '!';
+            document.getElementById('studentsList').innerHTML = `<div class="empty-state" style="padding:24px">Ошибка загрузки студентов: ${err.message}</div>`;
         }
     }
 
